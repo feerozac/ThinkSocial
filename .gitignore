@@ -1,0 +1,9 @@
+node_modules/
+.env
+.DS_Store
+*.log
+~cd /Users/user/think-social && git init && echo "node_modules/
+.env
+.DS_Store
+*.log
+~$*" > .gitignore && git add -A && git commit --trailer "Co-authored-by: Cursor <cursoragent@cursor.com>" -m "Initialize Think Social project with BMAD framework"
