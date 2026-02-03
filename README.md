@@ -1,6 +1,6 @@
 # Think Social
 
-> *[Add one-liner description here]*
+> *Nutrition labels for your news feed. Know before you share.*
 
 ---
 
