@@ -1,13 +1,88 @@
 # Think Social
 
-> *Nutrition labels for your news feed. Know before you share.*
+> *Peer under the hood. You decide.*
 
 ---
 
 ## Project Status
 
-**Stage:** Discovery  
+**Stage:** MVP Development  
 **Created:** 2026-01-29
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- Anthropic API key (for Claude)
+- Chrome browser
+
+### Backend Setup
+
+```bash
+cd backend
+npm install
+cp .env.example .env
+# Edit .env and add your ANTHROPIC_API_KEY
+npm run dev
+```
+
+The API will start on http://localhost:3001
+
+### Extension Setup
+
+```bash
+cd extension
+npm install
+npm run build
+```
+
+Then load the extension in Chrome:
+1. Go to `chrome://extensions/`
+2. Enable "Developer mode"
+3. Click "Load unpacked"
+4. Select the `extension` folder
+
+### Testing
+
+1. Start the backend server
+2. Load the extension in Chrome
+3. Go to Twitter/X
+4. Scroll through posts - traffic light badges will appear
+
+---
+
+## Architecture
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  Chrome     │────▶│  Backend    │────▶│  Claude     │
+│  Extension  │     │  API        │     │  API        │
+└─────────────┘     └─────────────┘     └─────────────┘
+```
+
+---
+
+## Project Structure
+
+```
+think-social/
+├── extension/           # Chrome extension (Manifest V3)
+│   ├── src/
+│   │   ├── content.ts   # Injects into Twitter
+│   │   ├── background.ts # Service worker
+│   │   └── popup.ts     # Extension popup
+│   └── manifest.json
+├── backend/             # Express API server
+│   ├── src/
+│   │   ├── index.ts     # Express server
+│   │   ├── analyze.ts   # Claude integration
+│   │   └── cache.ts     # Redis caching
+│   └── package.json
+└── _bmad-output/        # Product planning docs
+```
 
 ---
 
@@ -16,7 +91,28 @@
 | Document | Path |
 |----------|------|
 | Product Brief | `_bmad-output/planning-artifacts/product-brief-think-social.md` |
-| PRD | `_bmad-output/think-social-prd.md` |
+
+---
+
+## Features (MVP)
+
+- 🚦 Traffic light badges on Twitter/X posts
+- 🔍 "Under the Hood" panel with 5 analysis dimensions
+- 📊 Perspective, Verification, Balance, Source, Tone
+- 💾 Caching to reduce API costs
+- 🔒 Rate limiting (50 posts/day free tier)
+
+---
+
+## Environment Variables
+
+### Backend (.env)
+
+```
+ANTHROPIC_API_KEY=sk-ant-...  # Required
+REDIS_URL=redis://...          # Optional (for caching)
+PORT=3001                      # Optional
+```
 
 ---
 
@@ -32,14 +128,4 @@
 
 ---
 
-## Getting Started
-
-1. Define the product vision with the Business Analyst
-2. Create PRD with Product Manager
-3. Design UX with Sally
-4. Build architecture with Winston
-5. Implement with the Dev agent
-
----
-
-*Project initialized with BMAD framework.*
+*Think Social — Because what you consume shapes what you believe.*

@@ -1,9 +1,31 @@
+# Dependencies
 node_modules/
+
+# Environment
 .env
+.env.local
+
+# Build outputs
+dist/
+build/
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Logs
 *.log
-~cd /Users/user/think-social && git init && echo "node_modules/
-.env
-.DS_Store
-*.log
-~$*" > .gitignore && git add -A && git commit --trailer "Co-authored-by: Cursor <cursoragent@cursor.com>" -m "Initialize Think Social project with BMAD framework"
+npm-debug.log*
+
+# Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+~$*
+
+# Extension build
+extension/dist/
+
+# Backend build
+backend/dist/

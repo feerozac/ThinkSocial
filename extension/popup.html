@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Think Social</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      width: 300px;
+      background: #1a1a2e;
+      color: #e5e7eb;
+    }
+    
+    .header {
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      text-align: center;
+    }
+    
+    .logo {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .tagline {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+    
+    .content {
+      padding: 20px;
+    }
+    
+    .stat-box {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 600;
+      color: #a5b4fc;
+    }
+    
+    .stat-sub {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    
+    .legend {
+      margin-top: 16px;
+    }
+    
+    .legend-title {
+      font-size: 11px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    
+    .legend-dot.green { background: #10B981; }
+    .legend-dot.amber { background: #F59E0B; }
+    .legend-dot.red { background: #EF4444; }
+    
+    .footer {
+      padding: 12px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+    }
+    
+    .footer a {
+      color: #a5b4fc;
+      text-decoration: none;
+      font-size: 12px;
+    }
+    
+    .footer a:hover {
+      text-decoration: underline;
+    }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: rgba(16, 185, 129, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #10B981;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .status-text {
+      font-size: 12px;
+      color: #10B981;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">🔍</div>
+    <div class="title">Think Social</div>
+    <div class="tagline">Peer under the hood. You decide.</div>
+  </div>
+  
+  <div class="status">
+    <div class="status-dot"></div>
+    <div class="status-text">Active on Twitter/X</div>
+  </div>
+  
+  <div class="content">
+    <div class="stat-box">
+      <div class="stat-label">Analyses Remaining Today</div>
+      <div class="stat-value" id="remaining">--</div>
+      <div class="stat-sub">Resets at midnight</div>
+    </div>
+    
+    <div class="legend">
+      <div class="legend-title">What the signals mean</div>
+      <div class="legend-item">
+        <div class="legend-dot green"></div>
+        <span>Multiple sources agree, claims verified</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot amber"></div>
+        <span>Worth a closer look</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot red"></div>
+        <span>Dig deeper — conflicting info</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <a href="https://thinksocial.app" target="_blank">Learn more about Think Social</a>
+  </div>
+  
+  <script src="dist/popup.js"></script>
+</body>
+</html>
