@@ -9,19 +9,27 @@
 
 ## Executive Summary
 
-**Think Social** is a consumer media literacy tool that displays "health warning labels" for social media content — like nutrition facts on food packaging. Using AI-powered analysis, it gives users instant visibility into bias, truthfulness, and balance of what they're reading, helping them **know before they share**.
+**Think Social** is a media transparency tool that lets you **peer under the hood** of any social media post or news story. Like checking a car's history before buying, Think Social shows you what's behind the content — the sources, the perspectives, the context — so you can make your own informed decision.
+
+We don't tell you what's true or false. We show you the full picture. **You decide.**
 
 ---
 
 ## The Big Idea
 
-> **"Nutrition labels for your news feed."**
+> **"Peer under the hood of any story. You decide what to believe."**
 
-Just as food products carry mandatory health warnings and nutrition facts, social media content should come with a **Media Health Label** — a simple traffic light system that tells you:
+Think Social doesn't tell you what's true or false — it shows you **what's behind the content** so you can make your own informed decision. Like checking a car's history before buying, or reading ingredients before eating.
 
-- 🟢 **Green** — Balanced, factual, verified
-- 🟡 **Amber** — Caution — bias detected, unverified claims, or one-sided
-- 🔴 **Red** — Warning — significant bias, misleading, or factually inaccurate
+**Core philosophy:**
+- ❌ "We tell you what's biased"
+- ✅ "We show you what's under the hood — you decide"
+
+**The Traffic Light System** — not a judgment, but a quick signal to dig deeper:
+
+- 🟢 **Green** — Multiple sources agree, claims verified, perspectives represented
+- 🟡 **Amber** — Worth a closer look — limited sources, or single perspective
+- 🔴 **Red** — Dig deeper — conflicting information, disputed claims, or missing context
 
 ---
 
@@ -61,35 +69,43 @@ A **browser extension** (Chrome, Safari, Firefox) and **mobile app** that automa
 3. Traffic light badge appears on post (🟢🟡🔴)
 4. User taps/hovers for detailed breakdown
 
-### The Media Health Label
+### The "Under the Hood" Panel
 
 ```
 ┌─────────────────────────────────────────────┐
-│         MEDIA HEALTH LABEL                  │
-│         ══════════════════                  │
+│         🔍 UNDER THE HOOD                   │
 ├─────────────────────────────────────────────┤
 │                                             │
-│  OVERALL RATING:  🟡 CAUTION                │
+│  QUICK SIGNAL:  🟡 Worth a closer look      │
 │                                             │
 ├─────────────────────────────────────────────┤
-│  BREAKDOWN:                                 │
+│  WHAT WE FOUND:                             │
 │                                             │
-│  Bias            🟡  Moderate left lean     │
-│  Factual         🟢  Claims verified        │
-│  Balance         🔴  One perspective only   │
-│  Source          🟢  Established outlet     │
-│  Emotional Tone  🟡  Moderate sensationalism│
-│                                             │
-├─────────────────────────────────────────────┤
-│  WHAT THIS MEANS:                           │
-│  This post presents factual information     │
-│  but only shows one side of the story.      │
-│  Consider seeking alternative viewpoints.   │
+│  Perspective     🟡  Leans left of center   │
+│  Verification    🟢  Key claims check out   │
+│  Other Views     🔴  Only one side shown    │
+│  Source History  🟢  Established outlet     │
+│  Tone            🟡  Some emotional framing │
 │                                             │
 ├─────────────────────────────────────────────┤
-│  📚 Learn more  |  🔗 See sources           │
+│  THE FULL PICTURE:                          │
+│  The facts here appear accurate, but this   │
+│  is one perspective on a multi-sided issue. │
+│  Here's what other sources are saying →     │
+│                                             │
+├─────────────────────────────────────────────┤
+│  👁️ See other perspectives  |  🔗 Sources   │
 └─────────────────────────────────────────────┘
 ```
+
+**Key language shifts:**
+| Old (Judgmental) | New (Transparent) |
+|------------------|-------------------|
+| "This is biased" | "This leans [direction] of center" |
+| "False" | "We found conflicting information" |
+| "Warning" | "Worth a closer look" |
+| "Unreliable source" | "This source has a mixed track record" |
+| "What this means" | "What we found" / "The full picture" |
 
 ---
 
@@ -353,16 +369,62 @@ Proactively challenges users to escape their filter bubble by presenting alterna
 
 ---
 
-## Risks & Mitigations
+## Risks & Mitigations (Pre-mortem Analysis)
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| **Accusations of bias** | "Who watches the watchers?" | Transparent methodology, open-source scoring |
-| **Platform blocking** | Twitter/Meta block extension | Mobile app as fallback, API partnerships |
-| **AI errors** | Wrong ratings damage trust | Confidence scores, human appeal process |
-| **Scale/cost** | LLM costs at consumer scale | Caching, tiered analysis, efficient models |
-| **Filter bubble reinforcement** | Users only trust 🟢 content | Encourage diverse consumption, not avoidance |
-| **Legal/defamation** | Labeling content as "false" | Careful language, "our analysis suggests" |
+### Critical Risks
+
+| Risk | Likelihood | Impact | Prevention |
+|------|------------|--------|------------|
+| **"Ministry of Truth" perception** | High | Critical | Transparent methodology, third-party audits, user appeals, humble language |
+| **Platform blocking** | High | Critical | Early partnerships, standalone news reader, legal prep |
+| **Accuracy catastrophe** | Medium | Critical | "Developing story" mode, confidence thresholds, rapid corrections |
+| **Filter bubble backfire** | Medium | High | Balance metrics, honest marketing, mandatory perspective prompts |
+| **Scale economics death** | High | Critical | Aggressive caching, B2B revenue, smaller fine-tuned models |
+| **Legal challenges** | Medium | High | "Our analysis suggests" language, opinion framing, media law review |
+
+### The Core Risk
+
+> **The biggest risk isn't getting the AI wrong. It's being perceived as the arbiter of truth.**
+
+Think Social must position itself as a **tool that helps you see more**, not a **judge that tells you what's true**.
+
+### Mitigation Strategies
+
+**1. Radical Transparency**
+- Publish methodology and training data sources
+- Show confidence intervals on all ratings
+- Third-party annual bias audits by independent academics
+- Open-source the classification models
+
+**2. Humble Language**
+- Never say "false" — say "we found conflicting information"
+- Never say "biased" — say "leans [direction] of center"
+- Always frame as "our analysis suggests" not definitive judgment
+- Show the evidence, let users decide
+
+**3. User Control**
+- Appeals process with human review
+- Users can mark "I disagree with this rating"
+- Adjustable sensitivity settings
+- Option to see methodology for any rating
+
+**4. Breaking News Protocol**
+- "Developing story" mode with clear caveats
+- Require 3+ sources before rating breaking news
+- Higher confidence threshold for current events
+- Prominent, immediate corrections when wrong
+
+**5. Platform Strategy**
+- Approach platforms as partners, not adversaries
+- Build standalone news reader as backup
+- Pre-emptive legal strategy
+- User community to pressure for access
+
+**6. Economic Resilience**
+- Aggressive caching of popular content
+- Tiered analysis (light for free, deep for Pro)
+- B2B revenue from newsrooms/enterprises from day 1
+- Fine-tuned smaller models to reduce LLM costs
 
 ---
 
@@ -381,11 +443,14 @@ Proactively challenges users to escape their filter bubble by presenting alterna
 
 ## Tagline Options
 
-1. **"Know before you share."**
-2. **"Nutrition labels for your news feed."**
-3. **"See the whole story."**
-4. **"Think before you scroll."**
-5. **"Media health, at a glance."**
+1. **"Peer under the hood. You decide."**
+2. **"See what's behind the story."**
+3. **"The full picture, before you share."**
+4. **"Look deeper. Think clearer."**
+5. **"We show you more. You decide what to believe."**
+
+**Positioning statement:**
+> Think Social doesn't tell you what to think. We show you what's under the hood of any story — the sources, the perspectives, the context — so you can make your own informed decision.
 
 ---
 
