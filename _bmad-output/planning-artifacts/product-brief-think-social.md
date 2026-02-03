@@ -166,6 +166,125 @@ A **browser extension** (Chrome, Safari, Firefox) and **mobile app** that automa
 
 ---
 
+## Advanced Features: Media Firewall & Perspective Challenge
+
+### 6. Media Firewall Mode 🛡️
+
+A configurable content filter that limits exposure to harmful or low-quality content — like parental controls, but for media quality.
+
+**Firewall Settings:**
+
+| Level | What It Does |
+|-------|--------------|
+| **Off** | Labels only, no blocking |
+| **Gentle** | Blur 🔴 content with "Show anyway?" option |
+| **Moderate** | Hide 🔴 content, blur 🟡 content |
+| **Strict** | Only show 🟢 verified content |
+| **Custom** | User defines thresholds per dimension |
+
+**Use Cases:**
+- **Parents:** Protect kids from misinformation and hate speech
+- **Mental health:** Reduce exposure to outrage bait and doom scrolling
+- **Focus mode:** Only see verified, balanced content during work hours
+- **Election season:** Filter out propaganda and unverified claims
+
+**Firewall UI:**
+```
+┌─────────────────────────────────────────────┐
+│  🛡️ MEDIA FIREWALL ACTIVE                  │
+├─────────────────────────────────────────────┤
+│                                             │
+│  This content is hidden because:            │
+│  • 🔴 High emotional manipulation           │
+│  • 🔴 Unverified claims                     │
+│                                             │
+│  ┌─────────────┐  ┌─────────────────────┐  │
+│  │ Show Anyway │  │ See Alternative View │  │
+│  └─────────────┘  └─────────────────────┘  │
+│                                             │
+│  🔧 Adjust firewall settings                │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+### 7. Perspective Challenge Mode 🔄
+
+Proactively challenges users to escape their filter bubble by presenting alternative viewpoints on the same topic.
+
+**How It Works:**
+
+1. User reads a post on Topic X
+2. Think Social detects bias direction (e.g., left-leaning)
+3. System surfaces: *"See how others see this story"*
+4. Shows same topic from different perspective sources
+
+**Challenge Prompts:**
+
+| Trigger | Challenge |
+|---------|-----------|
+| User reads 5+ posts with same bias | "You've been reading mostly [left/right] takes. Want to see the other side?" |
+| User about to share one-sided content | "This post only shows one perspective. See the full picture?" |
+| Hot-button topic detected | "This topic is polarizing. Here's how [left/center/right] outlets are covering it." |
+| User in deep scroll | "You've been scrolling for 20 mins. Take a perspective break?" |
+
+**Perspective Panel:**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  🔄 PERSPECTIVE CHALLENGE                                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  You're reading about: "New immigration policy announced"       │
+│                                                                 │
+│  YOUR FEED SHOWS:                                               │
+│  ├── 🔵 Left-leaning sources (80%)                              │
+│  ├── ⚪ Center sources (15%)                                    │
+│  └── 🔴 Right-leaning sources (5%)                              │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  SEE OTHER PERSPECTIVES:                                        │
+│                                                                 │
+│  🔵 Left: "Policy praised by human rights groups"               │
+│     └── Source: The Guardian (🟢 Reliable, 🔵 Left-lean)        │
+│                                                                 │
+│  ⚪ Center: "Policy draws mixed reactions"                      │
+│     └── Source: Reuters (🟢 Reliable, ⚪ Center)                 │
+│                                                                 │
+│  🔴 Right: "Policy criticized as insufficient"                  │
+│     └── Source: Wall Street Journal (🟢 Reliable, 🔴 Right-lean)│
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  💡 Understanding multiple perspectives helps you form          │
+│     your own informed opinion.                                  │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ Read All     │  │ Dismiss      │  │ Turn Off Challenges  │  │
+│  └──────────────┘  └──────────────┘  └──────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 8. Media Wellness Features
+
+**Daily/Weekly Limits:**
+- Set time or post limits: "Alert me after 30 mins of social media"
+- "Doom scroll detector" — warns when consuming too much negative content
+
+**Bias Balance Goals:**
+- "This week, try to read 3 articles from sources you don't usually read"
+- Gamification: Earn "Open Mind" badges
+
+**Detox Mode:**
+- Temporarily block all social media except 🟢 verified content
+- "I need a break from the outrage"
+
+**Reflection Prompts:**
+- End of day: "Here's what shaped your worldview today"
+- Weekly: "Your media diet was 70% left-leaning. Here's what you might have missed."
+
+---
+
 ## Competitive Landscape
 
 | Competitor | What They Do | Think Social Advantage |
