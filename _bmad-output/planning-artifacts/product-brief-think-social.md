@@ -301,6 +301,103 @@ Proactively challenges users to escape their filter bubble by presenting alterna
 
 ---
 
+## Legal Shield Agent ⚖️
+
+**The differentiator that makes Think Social defensible — by design.**
+
+No other media analysis tool has built-in legal AI. Think Social is the only platform where every rating passes through an autonomous legal review agent before publishing.
+
+> **"The only media transparency tool with built-in legal AI — every rating is legally defensible by design."**
+
+### Core Functions
+
+| Function | What It Does |
+|----------|--------------|
+| **Pre-Rating Review** | Before any rating publishes, scans language for defamation risk |
+| **Safe Harbor Framing** | Auto-rewrites risky language to defensible alternatives |
+| **Risk Scoring** | Flags high-profile subjects (politicians, celebrities, corporations) for extra caution |
+| **Jurisdiction Awareness** | Adjusts language by user region (UK defamation law is stricter than US) |
+| **Precedent Tracking** | Monitors media law cases and updates guidance accordingly |
+| **Threat Response** | When legal threats arrive, assesses exposure and recommends rapid correction |
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    LEGAL SHIELD AGENT                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
+│  │   Content    │───▶│   Analysis   │───▶│ Legal Shield │      │
+│  │   Analyzed   │    │   Generated  │    │    Review    │      │
+│  └──────────────┘    └──────────────┘    └──────┬───────┘      │
+│                                                  │               │
+│                            ┌─────────────────────┼───────────┐  │
+│                            ▼                     ▼           ▼  │
+│                      ┌──────────┐         ┌──────────┐  ┌──────┐│
+│                      │ 🟢 PASS  │         │ 🟡 REFRAME│  │🔴 HOLD││
+│                      │ Publish  │         │ Auto-edit │  │Human ││
+│                      └──────────┘         └──────────┘  │Review││
+│                                                         └──────┘│
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Legal Shield Rules Engine
+
+| Trigger | Action |
+|---------|--------|
+| Subject is public figure with litigation history | Escalate to 🟡 REFRAME |
+| Rating implies criminal conduct | Escalate to 🔴 HOLD for human review |
+| Content involves ongoing legal proceedings | Add "sub judice" disclaimer |
+| Absolute statements ("this is false") | Auto-reframe to "our analysis suggests" |
+| User in UK/Australia (strict defamation laws) | Apply stricter language filters |
+| High-engagement content (>10K shares) | Re-review before serving |
+
+### Language Transformation Examples
+
+| Before (Risky) | After Legal Shield (Defensible) |
+|----------------|--------------------------------|
+| "This claim by @SenatorX is **false**" | "Our analysis found this claim conflicts with [sources]" |
+| "This source is **unreliable**" | "This source has a mixed track record on [topic]" |
+| "This is **propaganda**" | "This content appears to present a single perspective without noting alternatives" |
+| "**Warning:** Misleading content" | "Worth a closer look — our analysis found conflicting information" |
+| "@CEO_Name **lied** about earnings" | "This statement conflicts with [source] — @CEO_Name has not responded to requests for comment" |
+
+### Legal Shield Dashboard (Internal)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ⚖️ LEGAL SHIELD DASHBOARD                                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  TODAY'S STATS:                                                 │
+│  ├── 🟢 Passed: 94,231 ratings                                  │
+│  ├── 🟡 Reframed: 5,412 ratings (auto-corrected language)       │
+│  └── 🔴 Held: 47 ratings (pending human review)                 │
+│                                                                 │
+│  HIGH-RISK SUBJECTS FLAGGED:                                    │
+│  ├── @SenatorSmith — Active litigation, apply strict filter     │
+│  ├── @MegaCorp — History of SLAPP suits, extra caution          │
+│  └── Breaking: Ukraine conflict — sub judice in 3 jurisdictions │
+│                                                                 │
+│  LEGAL PRECEDENT UPDATES:                                       │
+│  ├── ⚠️ New UK Online Safety Act guidance — updating filters    │
+│  └── ✓ Dominion v Fox ruling — "actual malice" standard upheld  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Competitive Moat
+
+| Competitor | Legal Approach | Think Social Advantage |
+|------------|----------------|------------------------|
+| **NewsGuard** | Editorial discretion, human editors | Scalable AI review, consistent application |
+| **Snopes / PolitiFact** | Manual editorial review | Real-time, automated at scale |
+| **Community Notes** | Crowdsourced, no legal review | Legally vetted language on every rating |
+| **Ground News** | No rating language, just aggregation | Proactive legal protection built-in |
+
+---
+
 ## Competitive Landscape
 
 | Competitor | What They Do | Think Social Advantage |
@@ -313,7 +410,7 @@ Proactively challenges users to escape their filter bubble by presenting alterna
 
 ### Positioning
 
-> **Think Social is the only tool that brings food-style health warnings to your social media feed — instant, visual, and integrated where you already scroll.**
+> **Think Social is the only media transparency tool with built-in legal AI — every rating is defensible by design.** We let you peer under the hood of any story, showing you the sources, perspectives, and context — and our Legal Shield Agent ensures we never overstep.
 
 ---
 
@@ -343,17 +440,23 @@ Proactively challenges users to escape their filter bubble by presenting alterna
 ### Architecture
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Browser    │────▶│  Think      │────▶│  Analysis   │
-│  Extension  │     │  Social API │     │  Engine     │
-└─────────────┘     └─────────────┘     └─────────────┘
-                                              │
-                    ┌─────────────────────────┼─────────────────────────┐
-                    ▼                         ▼                         ▼
-             ┌─────────────┐          ┌─────────────┐          ┌─────────────┐
-             │  Fact-Check │          │  Bias       │          │  Source     │
-             │  Engine     │          │  Classifier │          │  Database   │
-             └─────────────┘          └─────────────┘          └─────────────┘
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  Browser    │────▶│  Think      │────▶│  Analysis   │────▶│   Legal     │
+│  Extension  │     │  Social API │     │  Engine     │     │   Shield    │
+└─────────────┘     └─────────────┘     └─────────────┘     └──────┬──────┘
+                                              │                     │
+                    ┌─────────────────────────┼─────────────────────┤
+                    ▼                         ▼                     ▼
+             ┌─────────────┐          ┌─────────────┐        ┌─────────────┐
+             │  Fact-Check │          │  Bias       │        │   Rating    │
+             │  Engine     │          │  Classifier │        │  Published  │
+             └─────────────┘          └─────────────┘        └─────────────┘
+                    │                         │
+                    ▼                         ▼
+             ┌─────────────┐          ┌─────────────┐
+             │  Source     │          │   Legal     │
+             │  Database   │          │  Precedent  │
+             └─────────────┘          └─────────────┘
 ```
 
 ### Key Technical Components
@@ -366,6 +469,9 @@ Proactively challenges users to escape their filter bubble by presenting alterna
 | **Fact-Check Engine** | RAG over verified sources | Claim verification |
 | **Bias Classifier** | Fine-tuned classifier | Political lean detection |
 | **Source Database** | PostgreSQL + embeddings | Source reputation tracking |
+| **Legal Shield Agent** | LLM + rules engine | Pre-publish legal review, language reframing |
+| **Legal Precedent DB** | PostgreSQL + case embeddings | Media law cases, jurisdiction rules |
+| **Risk Scoring Engine** | Custom ML model | High-profile subject flagging |
 
 ---
 
