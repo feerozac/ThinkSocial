@@ -16,7 +16,7 @@
 ### Prerequisites
 
 - Node.js 18+
-- Anthropic API key (for Claude)
+- DeepSeek API key (get one at https://platform.deepseek.com/)
 - Chrome browser
 
 ### Backend Setup
@@ -25,7 +25,7 @@
 cd backend
 npm install
 cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
+# Edit .env and add your DEEPSEEK_API_KEY
 npm run dev
 ```
 
@@ -58,7 +58,7 @@ Then load the extension in Chrome:
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Chrome     │────▶│  Backend    │────▶│  Claude     │
+│  Chrome     │────▶│  Backend    │────▶│  DeepSeek   │
 │  Extension  │     │  API        │     │  API        │
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
@@ -78,7 +78,7 @@ think-social/
 ├── backend/             # Express API server
 │   ├── src/
 │   │   ├── index.ts     # Express server
-│   │   ├── analyze.ts   # Claude integration
+│   │   ├── analyze.ts   # DeepSeek integration
 │   │   └── cache.ts     # Redis caching
 │   └── package.json
 └── _bmad-output/        # Product planning docs
@@ -109,9 +109,9 @@ think-social/
 ### Backend (.env)
 
 ```
-ANTHROPIC_API_KEY=sk-ant-...  # Required
-REDIS_URL=redis://...          # Optional (for caching)
-PORT=3001                      # Optional
+DEEPSEEK_API_KEY=sk-...  # Required (get at https://platform.deepseek.com/)
+REDIS_URL=redis://...    # Optional (for caching)
+PORT=3001                # Optional
 ```
 
 ---

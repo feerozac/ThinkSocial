@@ -1,15 +1,16 @@
-// Think Social - Claude API Integration for Post Analysis
+// Think Social - DeepSeek API Integration for Post Analysis
 
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { AnalysisResult } from './types';
 
-// Initialize Anthropic client
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || ''
+// Initialize DeepSeek client (OpenAI-compatible API)
+const deepseek = new OpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY || '',
+  baseURL: 'https://api.deepseek.com/v1'
 });
 
-// Analysis prompt - designed for consistent JSON output
-const ANALYSIS_PROMPT = `You are a media analysis assistant for Think Social. Analyze the following social media post and provide an objective assessment.
+// System prompt for consistent analysis
+const SYSTEM_PROMPT = `You are a media analysis assistant for Think Social. You analyze social media posts and provide objective assessments.
 
 IMPORTANT: You are NOT judging truth or falsehood. You are helping users understand what's behind the content - the perspective, the sources, the balance. Use humble, non-judgmental language.
 
@@ -40,23 +41,25 @@ Analyze across these 5 dimensions:
    - amber: Some emotional framing or sensationalism
    - red: Heavy emotional manipulation, outrage bait
 
-Provide a brief, helpful summary that empowers the reader to understand the content better.
+Always respond with valid JSON matching the required schema.`;
 
-Return ONLY valid JSON in this exact format:
+// User prompt template
+const USER_PROMPT_TEMPLATE = `Analyze this social media post and provide a brief, helpful summary that empowers the reader to understand the content better.
+
+Author: {{AUTHOR}}
+Content: {{CONTENT}}
+
+Respond with JSON in this exact format:
 {
   "overall": "green" | "amber" | "red",
-  "perspective": { "rating": "...", "label": "Brief description (max 30 chars)" },
-  "verification": { "rating": "...", "label": "Brief description" },
-  "balance": { "rating": "...", "label": "Brief description" },
-  "source": { "rating": "...", "label": "Brief description" },
-  "tone": { "rating": "...", "label": "Brief description" },
+  "perspective": { "rating": "green|amber|red", "label": "Brief description (max 30 chars)" },
+  "verification": { "rating": "green|amber|red", "label": "Brief description" },
+  "balance": { "rating": "green|amber|red", "label": "Brief description" },
+  "source": { "rating": "green|amber|red", "label": "Brief description" },
+  "tone": { "rating": "green|amber|red", "label": "Brief description" },
   "summary": "One or two sentences explaining the overall assessment",
   "confidence": 0.0-1.0
-}
-
-POST TO ANALYZE:
-Author: {{AUTHOR}}
-Content: {{CONTENT}}`;
+}`;
 
 // Validate the analysis result structure
 function validateAnalysisResult(data: unknown): data is AnalysisResult {
@@ -87,32 +90,37 @@ function validateAnalysisResult(data: unknown): data is AnalysisResult {
 
 // Main analysis function
 export async function analyzePost(text: string, author: string = 'Unknown'): Promise<AnalysisResult> {
-  // Build the prompt
-  const prompt = ANALYSIS_PROMPT
+  // Build the user prompt
+  const userPrompt = USER_PROMPT_TEMPLATE
     .replace('{{AUTHOR}}', author)
     .replace('{{CONTENT}}', text);
   
   try {
-    // Call Claude API
-    const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
-      max_tokens: 1024,
+    // Call DeepSeek API
+    const response = await deepseek.chat.completions.create({
+      model: 'deepseek-chat',
       messages: [
         {
+          role: 'system',
+          content: SYSTEM_PROMPT
+        },
+        {
           role: 'user',
-          content: prompt
+          content: userPrompt
         }
-      ]
+      ],
+      max_tokens: 1024,
+      response_format: { type: 'json_object' }
     });
     
     // Extract the text response
-    const content = response.content[0];
-    if (content.type !== 'text') {
-      throw new Error('Unexpected response type from Claude');
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('Empty response from DeepSeek');
     }
     
     // Parse JSON from response
-    const jsonText = content.text.trim();
+    const jsonText = content.trim();
     
     // Try to extract JSON if wrapped in markdown code blocks
     let cleanJson = jsonText;
@@ -125,7 +133,7 @@ export async function analyzePost(text: string, author: string = 'Unknown'): Pro
     
     // Validate the structure
     if (!validateAnalysisResult(analysis)) {
-      throw new Error('Invalid analysis structure from Claude');
+      throw new Error('Invalid analysis structure from DeepSeek');
     }
     
     return analysis;

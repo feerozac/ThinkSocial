@@ -21,7 +21,7 @@
 
 4. **Set environment variables:**
    ```bash
-   railway variables set ANTHROPIC_API_KEY=sk-ant-your-key
+   railway variables set DEEPSEEK_API_KEY=sk-your-deepseek-key
    railway variables set REDIS_URL=your-upstash-url  # Optional
    ```
 
@@ -48,7 +48,7 @@
 cd backend
 docker build -t think-social-api .
 docker run -d -p 3001:3001 \
-  -e ANTHROPIC_API_KEY=sk-ant-your-key \
+  -e DEEPSEEK_API_KEY=sk-your-deepseek-key \
   -e REDIS_URL=redis://... \
   think-social-api
 ```
@@ -111,7 +111,7 @@ Then load in Chrome:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes | Your Anthropic API key for Claude |
+| `DEEPSEEK_API_KEY` | Yes | Your DeepSeek API key (get at https://platform.deepseek.com/) |
 | `REDIS_URL` | No | Upstash Redis URL for caching |
 | `PORT` | No | Server port (default: 3001) |
 
