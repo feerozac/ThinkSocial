@@ -91,6 +91,8 @@ think-social/
 | Document | Path |
 |----------|------|
 | Product Brief | `_bmad-output/planning-artifacts/product-brief-think-social.md` |
+| UX Design Spec | `_bmad-output/planning-artifacts/ux-design-spec.md` |
+| Interactive Prototype | `prototype/index.html` |
 
 ---
 

@@ -560,13 +560,46 @@ Think Social must position itself as a **tool that helps you see more**, not a *
 
 ---
 
+## Design Artifacts
+
+### Interactive UX Prototype
+
+An interactive HTML prototype demonstrates the core user experience:
+
+**Location:** [`/prototype/index.html`](../../prototype/index.html)
+
+**What it shows:**
+- Traffic light badges (🟢🟡🔴) integrated into Twitter/X feed
+- "Under the Hood" panel with 5-dimension analysis
+- Three content scenarios: news, commentary, misinformation
+- Dark mode design matching Twitter/X aesthetic
+
+**To view:** Open the file in any browser
+
+### UX Design Specification
+
+Comprehensive design documentation available at:
+
+**Location:** [`ux-design-spec.md`](./ux-design-spec.md)
+
+**Contents:**
+- Visual design system (colors, typography, icons)
+- Component specifications (badge, panel, dimensions)
+- User flows and interaction patterns
+- Responsive behavior
+- Accessibility requirements
+- Implementation reference (CSS, classes)
+
+---
+
 ## Next Steps
 
-1. **Validate demand** — Landing page + waitlist
-2. **Prototype** — Browser extension MVP (Twitter only)
-3. **Bias model** — Train/fine-tune political lean classifier
-4. **Source database** — Seed with 1000 top sources
-5. **User testing** — 100 beta users, iterate on UX
+1. ~~**Prototype** — Browser extension MVP (Twitter only)~~ ✅ Complete
+2. ~~**UX Design** — Interactive prototype~~ ✅ Complete
+3. **Validate demand** — Landing page + waitlist
+4. **User testing** — Test prototype with 10-20 users
+5. **Bias model** — Train/fine-tune political lean classifier
+6. **Source database** — Seed with 1000 top sources
 
 ---
 
