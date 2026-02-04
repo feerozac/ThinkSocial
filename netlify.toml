@@ -1,7 +1,8 @@
 # Netlify configuration for Think Social Demo
 
 [build]
-  publish = "."
+  publish = "demo"
+  command = "echo 'No build needed'"
 
 [[headers]]
   for = "/*"
@@ -9,8 +10,3 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
