@@ -1,7 +1,7 @@
 {
-  "name": "think-social-extension",
+  "name": "inkline-extension",
   "version": "1.0.0",
-  "description": "Think Social Chrome Extension",
+  "description": "Inkline Chrome Extension",
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",

@@ -20,24 +20,24 @@ export function initCache(): void {
       });
       
       redis.on('connect', () => {
-        console.log('[Think Social] Redis connected');
+        console.log('[Inkline] Redis connected');
       });
       
       redis.on('error', (err) => {
-        console.error('[Think Social] Redis error:', err.message);
+        console.error('[Inkline] Redis error:', err.message);
       });
       
       // Connect
       redis.connect().catch((err) => {
-        console.error('[Think Social] Redis connection failed:', err.message);
+        console.error('[Inkline] Redis connection failed:', err.message);
         redis = null;
       });
     } catch (error) {
-      console.error('[Think Social] Redis init error:', error);
+      console.error('[Inkline] Redis init error:', error);
       redis = null;
     }
   } else {
-    console.log('[Think Social] No REDIS_URL configured, caching disabled');
+    console.log('[Inkline] No REDIS_URL configured, caching disabled');
   }
 }
 
@@ -59,14 +59,14 @@ export async function getCachedAnalysis(text: string): Promise<AnalysisResult | 
     const cached = await redis.get(key);
     
     if (cached) {
-      console.log('[Think Social] Cache hit:', key);
+      console.log('[Inkline] Cache hit:', key);
       return JSON.parse(cached) as AnalysisResult;
     }
     
-    console.log('[Think Social] Cache miss:', key);
+    console.log('[Inkline] Cache miss:', key);
     return null;
   } catch (error) {
-    console.error('[Think Social] Cache get error:', error);
+    console.error('[Inkline] Cache get error:', error);
     return null;
   }
 }
@@ -78,9 +78,9 @@ export async function cacheAnalysis(text: string, analysis: AnalysisResult): Pro
   try {
     const key = generateCacheKey(text);
     await redis.setex(key, CACHE_TTL, JSON.stringify(analysis));
-    console.log('[Think Social] Cached:', key);
+    console.log('[Inkline] Cached:', key);
   } catch (error) {
-    console.error('[Think Social] Cache set error:', error);
+    console.error('[Inkline] Cache set error:', error);
   }
 }
 

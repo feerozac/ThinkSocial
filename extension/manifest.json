@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Think Social",
+  "name": "Inkline",
   "version": "1.0.0",
-  "description": "Peer under the hood of any social media post. See bias, factual accuracy, and balance at a glance.",
+  "description": "Peer under the hood of any social media post. See bias, factual accuracy, and balance at a glance. By Inkline.",
   "permissions": [
     "storage",
     "activeTab"

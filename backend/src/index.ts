@@ -7,6 +7,8 @@ import dotenv from 'dotenv';
 
 import { analyzePost } from './analyze';
 import { initCache, getCachedAnalysis, cacheAnalysis, isCacheAvailable } from './cache';
+import { isVisionAvailable } from './vision';
+import { isSearchAvailable } from './search';
 import { AnalyzeRequest, AnalyzeResponse } from './types';
 
 // Load environment variables
@@ -18,13 +20,19 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-  origin: [
-    'chrome-extension://*',
-    'http://localhost:*',
-    'https://twitter.com',
-    'https://x.com'
-  ],
-  methods: ['GET', 'POST'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. curl, server-to-server)
+    if (!origin) return callback(null, true);
+    // Allow any chrome extension
+    if (origin.startsWith('chrome-extension://')) return callback(null, true);
+    // Allow localhost (any port)
+    if (origin.match(/^http:\/\/localhost(:\d+)?$/)) return callback(null, true);
+    // Allow Twitter/X
+    if (['https://twitter.com', 'https://x.com'].includes(origin)) return callback(null, true);
+    // Block everything else
+    callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type']
 }));
 
@@ -52,6 +60,8 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
     cache: isCacheAvailable() ? 'connected' : 'disconnected',
+    vision: isVisionAvailable() ? 'enabled (Qwen VL)' : 'disabled (no QWEN_API_KEY)',
+    search: isSearchAvailable() ? 'enabled (Tavily)' : 'disabled (no TAVILY_API_KEY)',
     timestamp: new Date().toISOString()
   });
 });
@@ -59,7 +69,7 @@ app.get('/health', (req: Request, res: Response) => {
 // Main analysis endpoint
 app.post('/api/analyze', async (req: Request, res: Response) => {
   try {
-    const { text, author } = req.body as AnalyzeRequest;
+    const { text, author, hasVideo, videoDescription, videoThumbnailUrl, imageUrls } = req.body as AnalyzeRequest;
     
     // Validate input
     if (!text || typeof text !== 'string') {
@@ -102,8 +112,15 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
       return;
     }
     
-    // Perform analysis
-    const analysis = await analyzePost(text, author || 'Unknown');
+    // Perform analysis (routes through Qwen VL for visual content, then DeepSeek for structured analysis)
+    const analysis = await analyzePost(
+      text,
+      author || 'Unknown',
+      hasVideo || false,
+      videoDescription || '',
+      videoThumbnailUrl || '',
+      imageUrls || []
+    );
     
     // Cache the result
     await cacheAnalysis(text, analysis);
@@ -116,7 +133,7 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
     
     res.json(response);
   } catch (error) {
-    console.error('[Think Social] API error:', error);
+    console.error('[Inkline] API error:', error);
     
     const response: AnalyzeResponse = {
       success: false,
@@ -133,7 +150,7 @@ app.use((req: Request, res: Response) => {
 
 // Error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('[Think Social] Unhandled error:', err);
+  console.error('[Inkline] Unhandled error:', err);
   res.status(500).json({ success: false, error: 'Internal server error' });
 });
 
@@ -144,13 +161,13 @@ async function start(): Promise<void> {
   
   // Start server
   app.listen(PORT, () => {
-    console.log(`[Think Social] Server running on port ${PORT}`);
-    console.log(`[Think Social] Health check: http://localhost:${PORT}/health`);
-    console.log(`[Think Social] Analyze endpoint: http://localhost:${PORT}/api/analyze`);
+    console.log(`[Inkline] Server running on port ${PORT}`);
+    console.log(`[Inkline] Health check: http://localhost:${PORT}/health`);
+    console.log(`[Inkline] Analyze endpoint: http://localhost:${PORT}/api/analyze`);
   });
 }
 
 start().catch((error) => {
-  console.error('[Think Social] Failed to start server:', error);
+  console.error('[Inkline] Failed to start server:', error);
   process.exit(1);
 });

@@ -1,6 +1,15 @@
 // Think Social - Background Service Worker
 // Handles API communication and caching
 
+interface CounterSource {
+  outlet: string;
+  lean: string;
+  headline: string;
+  url: string;
+  snippet?: string;
+  isReal: boolean;
+}
+
 interface AnalysisResult {
   overall: 'green' | 'amber' | 'red';
   perspective: { rating: 'green' | 'amber' | 'red'; label: string };
@@ -10,6 +19,9 @@ interface AnalysisResult {
   tone: { rating: 'green' | 'amber' | 'red'; label: string };
   summary: string;
   confidence: number;
+  counterSources?: CounterSource[];
+  videoAnalysis?: string;
+  hasVideo?: boolean;
 }
 
 interface CacheEntry {
@@ -44,7 +56,7 @@ async function getCachedAnalysis(text: string): Promise<AnalysisResult | null> {
     const age = Date.now() - entry.timestamp;
     
     if (age < CACHE_TTL) {
-      console.log('[Think Social] Cache hit for', key);
+      console.log('[Inkline] Cache hit for', key);
       return entry.analysis;
     } else {
       // Cache expired, remove it
@@ -64,7 +76,7 @@ async function cacheAnalysis(text: string, analysis: AnalysisResult): Promise<vo
   };
   
   await chrome.storage.local.set({ [key]: entry });
-  console.log('[Think Social] Cached analysis for', key);
+  console.log('[Inkline] Cached analysis for', key);
 }
 
 // Check and update rate limit
@@ -115,13 +127,20 @@ async function getRemainingRequests(): Promise<number> {
 }
 
 // Call the backend API
-async function analyzeWithAPI(text: string, author: string): Promise<AnalysisResult> {
+async function analyzeWithAPI(
+  text: string,
+  author: string,
+  hasVideo: boolean = false,
+  videoDescription: string = '',
+  videoThumbnailUrl: string = '',
+  imageUrls: string[] = []
+): Promise<AnalysisResult> {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ text, author })
+    body: JSON.stringify({ text, author, hasVideo, videoDescription, videoThumbnailUrl, imageUrls })
   });
   
   if (!response.ok) {
@@ -141,7 +160,11 @@ async function analyzeWithAPI(text: string, author: string): Promise<AnalysisRes
 async function analyzePost(
   tweetId: string,
   text: string,
-  author: string
+  author: string,
+  hasVideo: boolean = false,
+  videoDescription: string = '',
+  videoThumbnailUrl: string = '',
+  imageUrls: string[] = []
 ): Promise<{ analysis: AnalysisResult | null; error?: string; cached?: boolean }> {
   try {
     // Check cache first
@@ -160,14 +183,14 @@ async function analyzePost(
     }
     
     // Call API
-    const analysis = await analyzeWithAPI(text, author);
+    const analysis = await analyzeWithAPI(text, author, hasVideo, videoDescription, videoThumbnailUrl, imageUrls);
     
     // Cache the result
     await cacheAnalysis(text, analysis);
     
     return { analysis, cached: false };
   } catch (error) {
-    console.error('[Think Social] Analysis error:', error);
+    console.error('[Inkline] Analysis error:', error);
     return { 
       analysis: null, 
       error: error instanceof Error ? error.message : 'Unknown error' 
@@ -178,9 +201,9 @@ async function analyzePost(
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'ANALYZE_POST') {
-    const { tweetId, text, author } = message.payload;
+    const { tweetId, text, author, hasVideo, videoDescription, videoThumbnailUrl, imageUrls } = message.payload;
     
-    analyzePost(tweetId, text, author)
+    analyzePost(tweetId, text, author, hasVideo || false, videoDescription || '', videoThumbnailUrl || '', imageUrls || [])
       .then(result => {
         sendResponse({
           type: 'ANALYSIS_RESULT',
@@ -204,4 +227,4 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // Log when service worker starts
-console.log('[Think Social] Background service worker started');
+console.log('[Inkline] Background service worker started');

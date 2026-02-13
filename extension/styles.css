@@ -1,45 +1,75 @@
 /* Think Social - Extension Styles */
 
-/* Badge container */
+/* Badge container - positioned top-right of tweet */
 .think-social-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  position: relative;
-  margin-right: 8px;
-  background: rgba(0, 0, 0, 0.05);
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  background: rgba(22, 24, 28, 0.85);
+  backdrop-filter: blur(4px);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
 }
 
 .think-social-badge:hover {
-  transform: scale(1.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: scale(1.15);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Make tweet article a positioning context */
+.think-social-positioned {
+  position: relative !important;
 }
 
 /* Traffic light indicator */
 .think-social-light {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  box-shadow: 0 0 8px currentColor;
-  animation: ts-pulse 2s infinite;
+  box-shadow: 0 0 6px currentColor;
 }
 
-@keyframes ts-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+/* Red-rated badges get a persistent glow to draw attention */
+.think-social-badge[data-rating="red"] .think-social-light {
+  animation: ts-red-glow 2s ease-in-out infinite;
+}
+
+.think-social-badge[data-rating="red"] {
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes ts-red-glow {
+  0%, 100% { 
+    box-shadow: 0 0 6px #EF4444, 0 0 12px rgba(239, 68, 68, 0.3); 
+    opacity: 1;
+  }
+  50% { 
+    box-shadow: 0 0 10px #EF4444, 0 0 20px rgba(239, 68, 68, 0.5); 
+    opacity: 0.85;
+  }
+}
+
+/* Green and amber stay static — no animation */
+.think-social-badge[data-rating="green"] .think-social-light,
+.think-social-badge[data-rating="amber"] .think-social-light {
+  animation: none;
 }
 
 /* Loading spinner */
 .think-social-loading .think-social-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #e5e7eb;
-  border-top-color: #3b82f6;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #a5b4fc;
   border-radius: 50%;
   animation: ts-spin 0.8s linear infinite;
 }
@@ -50,28 +80,30 @@
 
 /* Error state */
 .think-social-error {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .think-social-error-icon {
-  font-size: 14px;
+  font-size: 12px;
 }
 
-/* Under the Hood Panel */
+/* Under the Hood Panel - fixed position on body, avoids tweet overflow clipping */
 .think-social-panel {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 320px;
+  position: fixed;
+  width: 340px;
+  max-height: 520px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: #1a1a2e;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-  z-index: 10000;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  z-index: 99999;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
-  margin-bottom: 8px;
+  pointer-events: none;
+  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  transform: translateY(4px);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #e5e7eb;
   font-size: 13px;
@@ -81,6 +113,26 @@
 .think-social-panel.ts-panel-visible {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* Custom scrollbar for the panel */
+.think-social-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.think-social-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.think-social-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.think-social-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* Panel Header */
@@ -166,7 +218,7 @@
 
 .ts-dimension {
   display: grid;
-  grid-template-columns: 100px 24px 1fr;
+  grid-template-columns: 120px 24px 1fr;
   align-items: center;
   padding: 6px 0;
   gap: 8px;
@@ -205,11 +257,137 @@
   line-height: 1.5;
 }
 
+/* Counter Sources - Related Coverage */
+.ts-counter-sources {
+  padding: 12px 16px;
+}
+
+.ts-counter-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: #a5b4fc;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.ts-counter-subtitle {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 10px;
+}
+
+.ts-counter-item {
+  display: block;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-left: 3px solid #a5b4fc;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ts-counter-link {
+  cursor: pointer;
+}
+
+.ts-counter-link:hover {
+  background: rgba(165, 180, 252, 0.12);
+  border-left-color: #818cf8;
+}
+
+.ts-counter-item:last-child {
+  margin-bottom: 0;
+}
+
+.ts-counter-outlet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.ts-counter-name {
+  font-weight: 600;
+  color: #a5b4fc;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ts-counter-lean {
+  font-size: 10px;
+  color: #9ca3af;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ts-counter-headline {
+  font-size: 12px;
+  color: #e5e7eb;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.ts-counter-link:hover .ts-counter-headline {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.ts-counter-snippet {
+  font-size: 11px;
+  color: #9ca3af;
+  line-height: 1.4;
+  margin-top: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Video Analysis */
+.ts-video-analysis {
+  padding: 12px 16px;
+}
+
+.ts-video-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: #a5b4fc;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.ts-video-text {
+  font-size: 12px;
+  color: #d1d5db;
+  line-height: 1.5;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 10px 12px;
+  border-left: 3px solid #818cf8;
+}
+
+/* Disclaimer */
+.ts-panel-disclaimer {
+  padding: 8px 16px;
+  font-size: 10px;
+  color: #6b7280;
+  line-height: 1.4;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  font-style: italic;
+}
+
 /* Footer */
 .ts-panel-footer {
   padding: 8px 16px 12px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .ts-confidence {
@@ -217,18 +395,15 @@
   color: #6b7280;
 }
 
-/* Dark mode adjustments for Twitter */
-@media (prefers-color-scheme: dark) {
-  .think-social-badge {
-    background: rgba(255, 255, 255, 0.05);
-  }
+.ts-branding {
+  font-size: 11px;
+  color: #a5b4fc;
+  font-weight: 500;
 }
 
 /* Responsive adjustments */
 @media (max-width: 500px) {
   .think-social-panel {
-    width: 280px;
-    left: 0;
-    transform: none;
+    width: 290px;
   }
 }

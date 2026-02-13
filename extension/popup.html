@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Think Social</title>
+  <title>Inkline</title>
   <style>
     * {
       margin: 0;
@@ -101,6 +101,14 @@
     .legend-dot.amber { background: #F59E0B; }
     .legend-dot.red { background: #EF4444; }
     
+    .disclaimer {
+      margin-top: 14px;
+      font-size: 10px;
+      color: #6b7280;
+      line-height: 1.4;
+      font-style: italic;
+    }
+    
     .footer {
       padding: 12px 20px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -148,7 +156,7 @@
 <body>
   <div class="header">
     <div class="logo">🔍</div>
-    <div class="title">Think Social</div>
+    <div class="title">Inkline</div>
     <div class="tagline">Peer under the hood. You decide.</div>
   </div>
   
@@ -168,21 +176,24 @@
       <div class="legend-title">What the signals mean</div>
       <div class="legend-item">
         <div class="legend-dot green"></div>
-        <span>Multiple sources agree, claims verified</span>
+        <span>Appears well-sourced</span>
       </div>
       <div class="legend-item">
         <div class="legend-dot amber"></div>
-        <span>Worth a closer look</span>
+        <span>Additional context may be helpful</span>
       </div>
       <div class="legend-item">
         <div class="legend-dot red"></div>
-        <span>Dig deeper — conflicting info</span>
+        <span>Consider seeking further sources</span>
+      </div>
+      <div class="disclaimer">
+        Inkline provides AI-generated context to support your own judgement. It does not determine truth or falsehood.
       </div>
     </div>
   </div>
   
   <div class="footer">
-    <a href="https://thinksocial.app" target="_blank">Learn more about Think Social</a>
+    <a href="https://inkline.app" target="_blank">Learn more about Inkline</a>
   </div>
   
   <script src="dist/popup.js"></script>

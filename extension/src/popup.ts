@@ -1,4 +1,4 @@
-// Think Social - Popup Script
+// Inkline - Popup Script
 
 // Get remaining requests count and update display
 async function updateRemaining(): Promise<void> {

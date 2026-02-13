@@ -1,7 +1,7 @@
 {
-  "name": "think-social-backend",
+  "name": "inkline-backend",
   "version": "1.0.0",
-  "description": "Think Social API Backend",
+  "description": "Inkline API Backend",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
