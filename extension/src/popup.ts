@@ -14,7 +14,32 @@ async function updateRemaining(): Promise<void> {
   }
 }
 
+// Detect which platform the active tab is on and update status text
+async function updatePlatformStatus(): Promise<void> {
+  const statusEl = document.getElementById('platform-status');
+  if (!statusEl) return;
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const url = tab?.url || '';
+    
+    const platforms: string[] = [];
+    if (url.includes('twitter.com') || url.includes('x.com')) platforms.push('Twitter/X');
+    else if (url.includes('facebook.com')) platforms.push('Facebook');
+    else if (url.includes('instagram.com')) platforms.push('Instagram');
+    
+    if (platforms.length > 0) {
+      statusEl.textContent = `Active on ${platforms.join(', ')}`;
+    } else {
+      statusEl.textContent = 'Works on Twitter/X, Facebook & Instagram';
+    }
+  } catch {
+    statusEl.textContent = 'Works on Twitter/X, Facebook & Instagram';
+  }
+}
+
 // Initialize popup
 document.addEventListener('DOMContentLoaded', () => {
   updateRemaining();
+  updatePlatformStatus();
 });

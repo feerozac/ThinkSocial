@@ -1,6 +1,7 @@
-/* Think Social - Extension Styles */
+/* Inkline - Extension Styles */
+/* Supports: Twitter/X, Facebook, Instagram */
 
-/* Badge container - positioned top-right of tweet */
+/* Badge container - positioned top-right of post */
 .think-social-badge {
   display: flex;
   align-items: center;

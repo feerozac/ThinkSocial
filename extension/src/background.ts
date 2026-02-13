@@ -33,7 +33,7 @@ interface CacheEntry {
 const API_URL = 'http://localhost:3001/api/analyze';
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
 const RATE_LIMIT_KEY = 'think_social_daily_count';
-const DAILY_LIMIT = 50;
+const DAILY_LIMIT = 200; // Raised for development; set to 50 for production free tier
 
 // Simple hash function for cache keys
 function hashText(text: string): string {

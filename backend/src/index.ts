@@ -27,8 +27,13 @@ app.use(cors({
     if (origin.startsWith('chrome-extension://')) return callback(null, true);
     // Allow localhost (any port)
     if (origin.match(/^http:\/\/localhost(:\d+)?$/)) return callback(null, true);
-    // Allow Twitter/X
-    if (['https://twitter.com', 'https://x.com'].includes(origin)) return callback(null, true);
+    // Allow Twitter/X, Facebook, Instagram
+    const allowedOrigins = [
+      'https://twitter.com', 'https://x.com',
+      'https://www.facebook.com', 'https://facebook.com',
+      'https://www.instagram.com', 'https://instagram.com'
+    ];
+    if (allowedOrigins.includes(origin)) return callback(null, true);
     // Block everything else
     callback(new Error('Not allowed by CORS'));
   },
