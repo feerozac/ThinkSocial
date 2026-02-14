@@ -634,87 +634,121 @@ function detectMedia(el: Element): MediaInfo {
 // ============================================================
 
 function twitterExtractComments(el: Element): string[] {
-  // On Twitter, replies are separate tweet articles below the main tweet.
-  // In feed view, we can see the "show replies" section.
-  // In thread view, subsequent tweets are siblings.
   const comments: string[] = [];
+  const mainText = getTweetTextContent(el);
 
-  // Strategy 1: If viewing a thread, get sibling articles after this one
-  const parent = el.parentElement;
-  if (parent) {
-    let foundSelf = false;
-    const siblings = Array.from(parent.children);
-    for (const sib of siblings) {
-      if (sib === el) { foundSelf = true; continue; }
-      if (!foundSelf) continue;
-      // Get reply text from sibling articles
-      const replyText = queryFirst(sib, [
-        '[data-testid="tweetText"]',
-        '[data-testid="tweet-text"]',
-        '[lang]'
-      ]);
-      if (replyText) {
-        const text = replyText.textContent?.trim();
-        if (text && text.length > 5) comments.push(text);
+  // Strategy 1: Walk UP to the conversation container, then find all tweet
+  // articles below this one. Twitter wraps threads in a container div that
+  // holds the main tweet + reply previews.
+  let container = el.parentElement;
+  // Walk up a few levels to find the conversation wrapper
+  for (let i = 0; i < 5 && container; i++) {
+    const articles = Array.from(container.querySelectorAll('article[data-testid="tweet"], article'));
+    if (articles.length > 1) {
+      let foundSelf = false;
+      for (const art of articles) {
+        if (art === el || art.contains(el) || el.contains(art)) {
+          foundSelf = true;
+          continue;
+        }
+        if (!foundSelf) continue;
+        const replyText = queryFirst(art, [
+          '[data-testid="tweetText"]',
+          '[data-testid="tweet-text"]',
+          '[lang]'
+        ]);
+        if (replyText) {
+          const text = replyText.textContent?.trim();
+          if (text && text.length > 5 && text !== mainText) {
+            comments.push(text);
+          }
+        }
+        if (comments.length >= 15) break;
       }
+      if (comments.length > 0) break;
+    }
+    container = container.parentElement;
+  }
+
+  // Strategy 2: If on a thread/status page, grab all tweet text blocks on
+  // the page after the main tweet
+  if (comments.length === 0 && window.location.pathname.includes('/status/')) {
+    const allTweetTexts = Array.from(document.querySelectorAll('[data-testid="tweetText"]'));
+    let foundMain = false;
+    for (const block of allTweetTexts) {
+      const text = block.textContent?.trim();
+      if (text === mainText) { foundMain = true; continue; }
+      if (!foundMain) continue;
+      if (text && text.length > 5) comments.push(text);
       if (comments.length >= 15) break;
     }
   }
 
-  // Strategy 2: Look for "show replies" expanded content within the article
+  // Strategy 3: Look inside the article for expanded reply text
   if (comments.length === 0) {
     const allTextBlocks = Array.from(el.querySelectorAll('[data-testid="tweetText"], [lang]'));
-    // Skip the first one (it's the main tweet), grab the rest as replies
     for (let i = 1; i < allTextBlocks.length && comments.length < 15; i++) {
       const text = allTextBlocks[i].textContent?.trim();
-      if (text && text.length > 5) comments.push(text);
+      if (text && text.length > 5 && text !== mainText) comments.push(text);
     }
   }
 
   return comments;
 }
 
+/** Helper: get the main tweet text for deduplication */
+function getTweetTextContent(el: Element): string {
+  const textEl = queryFirst(el, [
+    '[data-testid="tweetText"]',
+    '[data-testid="tweet-text"]',
+    '[lang]'
+  ]);
+  return textEl?.textContent?.trim() || '';
+}
+
 function facebookExtractComments(el: Element): string[] {
   const comments: string[] = [];
+  const mainText = facebookGetText(el);
+  const seen = new Set<string>();
 
-  // Facebook comments appear as nested elements within or after the post article
-  // They often have dir="auto" and are more deeply nested than the main text
-  // Look for comment-like structures: usually contain a name link + text block
-
-  // Strategy 1: Look for elements with role="article" nested inside (these are comments)
+  // Strategy 1: Nested role="article" elements (Facebook nests comments as sub-articles)
   const nestedArticles = Array.from(el.querySelectorAll('[role="article"]'));
   for (const nested of nestedArticles) {
-    if (nested === el) continue; // skip self
+    if (nested === el) continue;
     const textDivs = Array.from(nested.querySelectorAll('div[dir="auto"]'));
     for (const div of textDivs) {
       const text = div.textContent?.trim();
-      if (text && text.length > 5 && text.length < 500) {
+      if (text && text.length > 5 && text.length < 500 && text !== mainText && !seen.has(text)) {
+        seen.add(text);
         comments.push(text);
-        break; // one text per comment
+        break;
       }
     }
     if (comments.length >= 15) break;
   }
 
-  // Strategy 2: Look for comment blocks after the post in the same container
+  // Strategy 2: Walk UP to the feed unit container, then look for comment
+  // sections below the post (Facebook wraps posts + comments in a pagelet)
   if (comments.length === 0) {
-    const parent = el.parentElement;
-    if (parent) {
-      // Siblings after the post element may contain comments
-      let foundSelf = false;
-      for (const sib of Array.from(parent.children)) {
-        if (sib === el) { foundSelf = true; continue; }
-        if (!foundSelf) continue;
-        const divs = Array.from(sib.querySelectorAll('div[dir="auto"]'));
-        for (const div of divs) {
-          const text = div.textContent?.trim();
-          if (text && text.length > 5 && text.length < 500) {
-            comments.push(text);
-          }
-          if (comments.length >= 15) break;
+    let container = el.parentElement;
+    for (let i = 0; i < 6 && container; i++) {
+      // Facebook comment ULs often follow the post
+      const allDirAuto = Array.from(container.querySelectorAll('div[dir="auto"]'));
+      let foundMain = false;
+      for (const div of allDirAuto) {
+        const text = div.textContent?.trim();
+        if (text === mainText) { foundMain = true; continue; }
+        if (!foundMain) continue;
+        if (text && text.length > 5 && text.length < 500 && !seen.has(text)) {
+          // Skip very short UI labels
+          if (text.match(/^(Like|Reply|Share|Comment|\d+ (likes?|replies|comments?))/i)) continue;
+          seen.add(text);
+          comments.push(text);
         }
         if (comments.length >= 15) break;
       }
+      if (comments.length > 0) break;
+      container = container.parentElement;
     }
   }
 
@@ -723,31 +757,61 @@ function facebookExtractComments(el: Element): string[] {
 
 function instagramExtractComments(el: Element): string[] {
   const comments: string[] = [];
+  const mainCaption = instagramGetText(el);
+  const seen = new Set<string>();
 
-  // Instagram comments are typically in spans below the image/caption
-  // Look for comment container patterns
-  const spans = Array.from(el.querySelectorAll('span'));
-  let pastCaption = false;
+  // Strategy 1: Look for comment-like structures — on Instagram post pages,
+  // comments are usually in a list/section below the post
+  // Walk up to find the broader post container
+  let container = el.parentElement;
+  for (let i = 0; i < 5 && container; i++) {
+    const spans = Array.from(container.querySelectorAll('span'));
+    let pastCaption = false;
 
-  for (const span of spans) {
-    const text = span.textContent?.trim();
-    if (!text || text.length < 5) continue;
+    for (const span of spans) {
+      const text = span.textContent?.trim();
+      if (!text || text.length < 5) continue;
 
-    // Skip UI elements
-    if (text.match(/^\d+\s*(likes?|views?|comments?|hours?|days?|weeks?|minutes?)/i)) continue;
-    if (text === 'Reply' || text === 'View replies' || text.startsWith('View all')) continue;
+      // Skip UI elements
+      if (text.match(/^\d+\s*(likes?|views?|comments?|hours?|days?|weeks?|minutes?|seconds?)/i)) continue;
+      if (text.match(/^(Reply|View replies|View all|Liked by|others|more)/i)) continue;
 
-    // After seeing substantial text (the caption), subsequent shorter texts are likely comments
-    if (text.length > 50) {
-      pastCaption = true;
-      continue;
+      // Once we've passed the caption, collect subsequent text as comments
+      if (text === mainCaption || (mainCaption && text.length > 40 && mainCaption.startsWith(text.substring(0, 30)))) {
+        pastCaption = true;
+        continue;
+      }
+
+      if (pastCaption && text.length > 5 && text.length < 500 && !seen.has(text)) {
+        seen.add(text);
+        comments.push(text);
+      }
+
+      if (comments.length >= 15) break;
     }
 
-    if (pastCaption && text.length > 5 && text.length < 500) {
-      comments.push(text);
-    }
+    if (comments.length > 0) break;
+    container = container.parentElement;
+  }
 
-    if (comments.length >= 15) break;
+  // Strategy 2: On post detail pages (/p/ or /reel/), look at the whole page
+  if (comments.length === 0 && window.location.pathname.match(/\/(p|reel)\//)) {
+    const allSpans = Array.from(document.querySelectorAll('span'));
+    let pastCaption = false;
+    for (const span of allSpans) {
+      const text = span.textContent?.trim();
+      if (!text || text.length < 5) continue;
+      if (text.match(/^\d+\s*(likes?|views?|comments?|hours?|days?|weeks?|minutes?|seconds?)/i)) continue;
+      if (text.match(/^(Reply|View replies|View all|Liked by|others|more|Log in|Sign up)/i)) continue;
+
+      if (text === mainCaption) { pastCaption = true; continue; }
+
+      if (pastCaption && text.length > 5 && text.length < 500 && !seen.has(text)) {
+        seen.add(text);
+        comments.push(text);
+      }
+      if (comments.length >= 15) break;
+    }
   }
 
   return comments;
@@ -1112,8 +1176,21 @@ function triggerDeepAnalysis(postId: string): void {
   const meta = postMetaMap.get(postId);
   if (!meta || meta.deepResult || meta.deepPending) return;
 
+  // Re-extract comments fresh from the DOM — they may have loaded since
+  // the initial post detection (e.g. user scrolled into thread, or platform
+  // lazy-loaded comments)
+  const badge = document.querySelector(`.think-social-badge[data-post-id="${postId}"]`);
+  const article = badge?.closest('.think-social-positioned');
+  if (article) {
+    const freshComments = extractComments(article);
+    if (freshComments.length > meta.comments.length) {
+      console.log(`[Inkline] Re-extracted comments: ${meta.comments.length} → ${freshComments.length}`);
+      meta.comments = freshComments;
+    }
+  }
+
   meta.deepPending = true;
-  console.log(`[Inkline] Triggering deep analysis for ${postId}`);
+  console.log(`[Inkline] Triggering deep analysis for ${postId} (${meta.comments.length} comments)`);
 
   chrome.runtime.sendMessage(
     {
