@@ -240,6 +240,43 @@
   font-size: 12px;
 }
 
+/* Expandable dimension rows */
+.ts-dimension-expandable {
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+  padding: 6px 4px;
+  margin: 0 -4px;
+}
+
+.ts-dimension-expandable:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ts-dim-reason {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: #a5b4fc;
+  line-height: 1.5;
+  padding: 6px 8px;
+  background: rgba(165, 180, 252, 0.06);
+  border-left: 2px solid rgba(165, 180, 252, 0.3);
+  border-radius: 0 4px 4px 0;
+  margin-top: 2px;
+  display: none;
+}
+
+.ts-dim-expanded .ts-dim-reason {
+  display: block;
+}
+
+.ts-dim-hint {
+  font-size: 10px;
+  color: #6b7280;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
 /* Summary */
 .ts-panel-summary {
   padding: 12px 16px;

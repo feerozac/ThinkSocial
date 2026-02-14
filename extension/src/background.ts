@@ -18,13 +18,19 @@ interface CommentAnalysis {
   agreementLevel: string;
 }
 
+interface DimensionRating {
+  rating: 'green' | 'amber' | 'red';
+  label: string;
+  reason?: string;
+}
+
 interface AnalysisResult {
   overall: 'green' | 'amber' | 'red';
-  perspective: { rating: 'green' | 'amber' | 'red'; label: string };
-  verification: { rating: 'green' | 'amber' | 'red'; label: string };
-  balance: { rating: 'green' | 'amber' | 'red'; label: string };
-  source: { rating: 'green' | 'amber' | 'red'; label: string };
-  tone: { rating: 'green' | 'amber' | 'red'; label: string };
+  perspective: DimensionRating;
+  verification: DimensionRating;
+  balance: DimensionRating;
+  source: DimensionRating;
+  tone: DimensionRating;
   summary: string;
   confidence: number;
   counterPerspective?: string;

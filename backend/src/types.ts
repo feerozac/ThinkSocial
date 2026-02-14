@@ -5,6 +5,7 @@ export type Rating = 'green' | 'amber' | 'red';
 export interface DimensionRating {
   rating: Rating;
   label: string;
+  reason?: string;    // brief explanation of why this rating was given
 }
 
 export interface CounterSource {

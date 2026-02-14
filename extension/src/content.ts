@@ -13,13 +13,19 @@ interface CounterSource {
   isReal: boolean;
 }
 
+interface DimensionRating {
+  rating: 'green' | 'amber' | 'red';
+  label: string;
+  reason?: string;
+}
+
 interface AnalysisResult {
   overall: 'green' | 'amber' | 'red';
-  perspective: { rating: 'green' | 'amber' | 'red'; label: string };
-  verification: { rating: 'green' | 'amber' | 'red'; label: string };
-  balance: { rating: 'green' | 'amber' | 'red'; label: string };
-  source: { rating: 'green' | 'amber' | 'red'; label: string };
-  tone: { rating: 'green' | 'amber' | 'red'; label: string };
+  perspective: DimensionRating;
+  verification: DimensionRating;
+  balance: DimensionRating;
+  source: DimensionRating;
+  tone: DimensionRating;
   summary: string;
   confidence: number;
   counterPerspective?: string;
@@ -867,33 +873,21 @@ function createPanel(analysis: AnalysisResult): HTMLElement {
       </span>
     </div>
     <div class="ts-panel-divider"></div>
-    <div class="ts-panel-section-title">ANALYSIS DIMENSIONS:</div>
+    <div class="ts-panel-section-title">ANALYSIS DIMENSIONS: <span class="ts-dim-hint">(tap any row to see why)</span></div>
     <div class="ts-panel-dimensions">
-      <div class="ts-dimension">
-        <span class="ts-dim-name">Political Standpoint</span>
-        <span class="ts-dim-rating">${ratingEmoji[analysis.perspective.rating]}</span>
-        <span class="ts-dim-label">${analysis.perspective.label}</span>
-      </div>
-      <div class="ts-dimension">
-        <span class="ts-dim-name">How Factual?</span>
-        <span class="ts-dim-rating">${ratingEmoji[analysis.verification.rating]}</span>
-        <span class="ts-dim-label">${analysis.verification.label}</span>
-      </div>
-      <div class="ts-dimension">
-        <span class="ts-dim-name">Balance</span>
-        <span class="ts-dim-rating">${ratingEmoji[analysis.balance.rating]}</span>
-        <span class="ts-dim-label">${analysis.balance.label}</span>
-      </div>
-      <div class="ts-dimension">
-        <span class="ts-dim-name">Source History</span>
-        <span class="ts-dim-rating">${ratingEmoji[analysis.source.rating]}</span>
-        <span class="ts-dim-label">${analysis.source.label}</span>
-      </div>
-      <div class="ts-dimension">
-        <span class="ts-dim-name">Tone</span>
-        <span class="ts-dim-rating">${ratingEmoji[analysis.tone.rating]}</span>
-        <span class="ts-dim-label">${analysis.tone.label}</span>
-      </div>
+      ${[
+        { name: 'Political Standpoint', dim: analysis.perspective },
+        { name: 'How Factual?', dim: analysis.verification },
+        { name: 'Balance', dim: analysis.balance },
+        { name: 'Source History', dim: analysis.source },
+        { name: 'Tone', dim: analysis.tone }
+      ].map(d => `
+      <div class="ts-dimension ts-dimension-expandable">
+        <span class="ts-dim-name">${d.name}</span>
+        <span class="ts-dim-rating">${ratingEmoji[d.dim.rating]}</span>
+        <span class="ts-dim-label">${d.dim.label}</span>
+        ${d.dim.reason ? `<div class="ts-dim-reason">${d.dim.reason}</div>` : ''}
+      </div>`).join('')}
     </div>
     <div class="ts-panel-divider"></div>
     <div class="ts-panel-summary">
@@ -995,6 +989,14 @@ function createPanel(analysis: AnalysisResult): HTMLElement {
 
   panel.addEventListener('touchmove', (e) => { e.stopPropagation(); }, { passive: false });
   panel.addEventListener('click', (e) => { e.stopPropagation(); });
+
+  // Expandable dimension rows — click to toggle reasoning
+  panel.querySelectorAll('.ts-dimension-expandable').forEach(dim => {
+    dim.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dim.classList.toggle('ts-dim-expanded');
+    });
+  });
   
   return panel;
 }
