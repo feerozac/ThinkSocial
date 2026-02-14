@@ -349,6 +349,55 @@
   overflow: hidden;
 }
 
+/* Counter Perspective */
+.ts-counter-perspective {
+  padding: 12px 16px;
+}
+
+.ts-counter-perspective-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: #fbbf24;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.ts-counter-perspective-text {
+  font-size: 12px;
+  color: #e5e7eb;
+  line-height: 1.5;
+  background: rgba(251, 191, 36, 0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+  border-left: 3px solid #fbbf24;
+  font-style: italic;
+}
+
+/* Stance labels on articles */
+.ts-counter-stance {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ts-stance-counter {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.ts-stance-supporting {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+}
+
+.ts-stance-neutral {
+  background: rgba(255, 255, 255, 0.08);
+  color: #9ca3af;
+}
+
 /* Video Analysis */
 .ts-video-analysis {
   padding: 12px 16px;
@@ -370,6 +419,136 @@
   border-radius: 8px;
   padding: 10px 12px;
   border-left: 3px solid #818cf8;
+}
+
+/* Deep analysis loading state */
+.ts-panel-loading-deep {
+  padding: 40px 20px;
+}
+
+.ts-panel-loading-deep .think-social-spinner {
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #a5b4fc;
+  border-radius: 50%;
+  animation: ts-spin 0.8s linear infinite;
+}
+
+/* Comment Climate */
+.ts-comment-climate {
+  padding: 12px 16px;
+}
+
+.ts-comment-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: #a5b4fc;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.ts-comment-agreement {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.ts-comment-agreement[data-level="echo-chamber"],
+.ts-comment-agreement[data-level="polarised"] {
+  color: #EF4444;
+}
+
+.ts-comment-agreement[data-level="mostly-agree"],
+.ts-comment-agreement[data-level="mostly-disagree"] {
+  color: #F59E0B;
+}
+
+.ts-comment-agreement[data-level="mixed"] {
+  color: #10B981;
+}
+
+.ts-comment-tone {
+  font-size: 12px;
+  color: #d1d5db;
+  margin-bottom: 4px;
+  font-style: italic;
+}
+
+.ts-comment-lean {
+  font-size: 11px;
+  color: #9ca3af;
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+.ts-comment-highlights-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9ca3af;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.ts-comment-highlight {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-left: 3px solid #6b7280;
+}
+
+.ts-comment-highlight[data-sentiment="disagree"] {
+  border-left-color: #EF4444;
+}
+
+.ts-comment-highlight[data-sentiment="nuanced"] {
+  border-left-color: #fbbf24;
+}
+
+.ts-comment-highlight[data-sentiment="agree"] {
+  border-left-color: #10B981;
+}
+
+.ts-comment-highlight:last-child {
+  margin-bottom: 0;
+}
+
+.ts-highlight-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.ts-highlight-icon {
+  font-size: 12px;
+}
+
+.ts-highlight-author {
+  font-size: 11px;
+  font-weight: 600;
+  color: #a5b4fc;
+}
+
+.ts-highlight-sentiment {
+  font-size: 9px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-left: auto;
+}
+
+.ts-highlight-text {
+  font-size: 11px;
+  color: #e5e7eb;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.ts-highlight-reason {
+  font-size: 10px;
+  color: #9ca3af;
+  font-style: italic;
 }
 
 /* Disclaimer */

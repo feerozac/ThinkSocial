@@ -5,7 +5,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 
-import { analyzePost } from './analyze';
+import { analyzePost, quickScan } from './analyze';
 import { initCache, getCachedAnalysis, cacheAnalysis, isCacheAvailable } from './cache';
 import { isVisionAvailable } from './vision';
 import { isSearchAvailable } from './search';
@@ -74,7 +74,7 @@ app.get('/health', (req: Request, res: Response) => {
 // Main analysis endpoint
 app.post('/api/analyze', async (req: Request, res: Response) => {
   try {
-    const { text, author, hasVideo, videoDescription, videoThumbnailUrl, imageUrls } = req.body as AnalyzeRequest;
+    const { text, author, hasVideo, videoDescription, videoThumbnailUrl, imageUrls, comments, depth } = req.body as AnalyzeRequest;
     
     // Validate input
     if (!text || typeof text !== 'string') {
@@ -86,7 +86,6 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
       return;
     }
     
-    // Check text length
     if (text.length < 10) {
       const response: AnalyzeResponse = {
         success: false,
@@ -104,6 +103,39 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
       res.status(400).json(response);
       return;
     }
+
+    const analysisDepth = depth || 'deep'; // default to deep for backward compat
+
+    // === TIER 1: Quick scan — just traffic light ===
+    if (analysisDepth === 'quick') {
+      // Check cache for a full analysis first (if we already have deep data, use it)
+      const cached = await getCachedAnalysis(text);
+      if (cached) {
+        const response: AnalyzeResponse = {
+          success: true,
+          quickResult: {
+            overall: cached.overall,
+            summary: cached.summary.substring(0, 80),
+            confidence: cached.confidence
+          },
+          cached: true
+        };
+        res.json(response);
+        return;
+      }
+
+      console.log('[Inkline] Tier 1: quick scan');
+      const quickResult = await quickScan(text, author || 'Unknown');
+      const response: AnalyzeResponse = {
+        success: true,
+        quickResult,
+        cached: false
+      };
+      res.json(response);
+      return;
+    }
+
+    // === TIER 2: Deep analysis — full pipeline ===
     
     // Check cache first
     const cached = await getCachedAnalysis(text);
@@ -117,17 +149,18 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
       return;
     }
     
-    // Perform analysis (routes through Qwen VL for visual content, then DeepSeek for structured analysis)
+    console.log('[Inkline] Tier 2: deep analysis');
     const analysis = await analyzePost(
       text,
       author || 'Unknown',
       hasVideo || false,
       videoDescription || '',
       videoThumbnailUrl || '',
-      imageUrls || []
+      imageUrls || [],
+      comments || []
     );
     
-    // Cache the result
+    // Cache the deep result
     await cacheAnalysis(text, analysis);
     
     const response: AnalyzeResponse = {

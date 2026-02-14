@@ -1,5 +1,6 @@
 // Inkline - Multi-Platform Content Script
 // Supports: Twitter/X, Facebook, Instagram
+// Two-tier analysis: quick scan on load, deep analysis on hover
 // Detects posts and injects analysis badges with resilient selectors
 
 interface CounterSource {
@@ -8,6 +9,7 @@ interface CounterSource {
   headline: string;
   url: string;
   snippet?: string;
+  stance?: string;    // "supporting", "counter", or "neutral"
   isReal: boolean;
 }
 
@@ -20,9 +22,17 @@ interface AnalysisResult {
   tone: { rating: 'green' | 'amber' | 'red'; label: string };
   summary: string;
   confidence: number;
+  counterPerspective?: string;
   counterSources?: CounterSource[];
+  commentAnalysis?: CommentAnalysis;
   videoAnalysis?: string;
   hasVideo?: boolean;
+}
+
+interface QuickResult {
+  overall: 'green' | 'amber' | 'red';
+  summary: string;
+  confidence: number;
 }
 
 interface MediaInfo {
@@ -30,6 +40,25 @@ interface MediaInfo {
   videoDescription: string;
   videoThumbnailUrl: string;
   imageUrls: string[];
+}
+
+interface CommentAnalysis {
+  overallTone: string;
+  leaningSummary: string;
+  highlights: Array<{ author: string; text: string; reason: string; sentiment: string }>;
+  agreementLevel: string;
+}
+
+// Store post metadata so we can do deep analysis on hover without re-extracting
+interface PostMeta {
+  postId: string;
+  text: string;
+  author: string;
+  media: MediaInfo;
+  comments: string[];
+  quickResult?: QuickResult;
+  deepResult?: AnalysisResult;
+  deepPending?: boolean;
 }
 
 type Platform = 'twitter' | 'facebook' | 'instagram' | 'unknown';
@@ -40,6 +69,7 @@ type Platform = 'twitter' | 'facebook' | 'instagram' | 'unknown';
 
 const processedPosts = new Set<string>();
 const pendingPosts = new Set<string>();
+const postMetaMap = new Map<string, PostMeta>();
 let activePanel: HTMLElement | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -600,6 +630,139 @@ function detectMedia(el: Element): MediaInfo {
 }
 
 // ============================================================
+// COMMENT EXTRACTORS — grab visible comments/replies near a post
+// ============================================================
+
+function twitterExtractComments(el: Element): string[] {
+  // On Twitter, replies are separate tweet articles below the main tweet.
+  // In feed view, we can see the "show replies" section.
+  // In thread view, subsequent tweets are siblings.
+  const comments: string[] = [];
+
+  // Strategy 1: If viewing a thread, get sibling articles after this one
+  const parent = el.parentElement;
+  if (parent) {
+    let foundSelf = false;
+    const siblings = Array.from(parent.children);
+    for (const sib of siblings) {
+      if (sib === el) { foundSelf = true; continue; }
+      if (!foundSelf) continue;
+      // Get reply text from sibling articles
+      const replyText = queryFirst(sib, [
+        '[data-testid="tweetText"]',
+        '[data-testid="tweet-text"]',
+        '[lang]'
+      ]);
+      if (replyText) {
+        const text = replyText.textContent?.trim();
+        if (text && text.length > 5) comments.push(text);
+      }
+      if (comments.length >= 15) break;
+    }
+  }
+
+  // Strategy 2: Look for "show replies" expanded content within the article
+  if (comments.length === 0) {
+    const allTextBlocks = Array.from(el.querySelectorAll('[data-testid="tweetText"], [lang]'));
+    // Skip the first one (it's the main tweet), grab the rest as replies
+    for (let i = 1; i < allTextBlocks.length && comments.length < 15; i++) {
+      const text = allTextBlocks[i].textContent?.trim();
+      if (text && text.length > 5) comments.push(text);
+    }
+  }
+
+  return comments;
+}
+
+function facebookExtractComments(el: Element): string[] {
+  const comments: string[] = [];
+
+  // Facebook comments appear as nested elements within or after the post article
+  // They often have dir="auto" and are more deeply nested than the main text
+  // Look for comment-like structures: usually contain a name link + text block
+
+  // Strategy 1: Look for elements with role="article" nested inside (these are comments)
+  const nestedArticles = Array.from(el.querySelectorAll('[role="article"]'));
+  for (const nested of nestedArticles) {
+    if (nested === el) continue; // skip self
+    const textDivs = Array.from(nested.querySelectorAll('div[dir="auto"]'));
+    for (const div of textDivs) {
+      const text = div.textContent?.trim();
+      if (text && text.length > 5 && text.length < 500) {
+        comments.push(text);
+        break; // one text per comment
+      }
+    }
+    if (comments.length >= 15) break;
+  }
+
+  // Strategy 2: Look for comment blocks after the post in the same container
+  if (comments.length === 0) {
+    const parent = el.parentElement;
+    if (parent) {
+      // Siblings after the post element may contain comments
+      let foundSelf = false;
+      for (const sib of Array.from(parent.children)) {
+        if (sib === el) { foundSelf = true; continue; }
+        if (!foundSelf) continue;
+        const divs = Array.from(sib.querySelectorAll('div[dir="auto"]'));
+        for (const div of divs) {
+          const text = div.textContent?.trim();
+          if (text && text.length > 5 && text.length < 500) {
+            comments.push(text);
+          }
+          if (comments.length >= 15) break;
+        }
+        if (comments.length >= 15) break;
+      }
+    }
+  }
+
+  return comments;
+}
+
+function instagramExtractComments(el: Element): string[] {
+  const comments: string[] = [];
+
+  // Instagram comments are typically in spans below the image/caption
+  // Look for comment container patterns
+  const spans = Array.from(el.querySelectorAll('span'));
+  let pastCaption = false;
+
+  for (const span of spans) {
+    const text = span.textContent?.trim();
+    if (!text || text.length < 5) continue;
+
+    // Skip UI elements
+    if (text.match(/^\d+\s*(likes?|views?|comments?|hours?|days?|weeks?|minutes?)/i)) continue;
+    if (text === 'Reply' || text === 'View replies' || text.startsWith('View all')) continue;
+
+    // After seeing substantial text (the caption), subsequent shorter texts are likely comments
+    if (text.length > 50) {
+      pastCaption = true;
+      continue;
+    }
+
+    if (pastCaption && text.length > 5 && text.length < 500) {
+      comments.push(text);
+    }
+
+    if (comments.length >= 15) break;
+  }
+
+  return comments;
+}
+
+function extractComments(el: Element): string[] {
+  switch (PLATFORM) {
+    case 'twitter': return twitterExtractComments(el);
+    case 'facebook': return facebookExtractComments(el);
+    case 'instagram': return instagramExtractComments(el);
+    default: return [];
+  }
+}
+
+// ============================================================
 // YOUTUBE ID HELPER
 // ============================================================
 
@@ -618,6 +781,7 @@ function extractYouTubeId(url: string): string | null {
 
 // ============================================================
 // SHARED UI — Badge, Panel, Communication (platform-agnostic)
+// Two-tier: quick scan sets badge color, hover triggers deep analysis
 // ============================================================
 
 function createPanel(analysis: AnalysisResult): HTMLElement {
@@ -672,21 +836,31 @@ function createPanel(analysis: AnalysisResult): HTMLElement {
       <div class="ts-summary-title">CONTEXTUAL SUMMARY:</div>
       <div class="ts-summary-text">${analysis.summary}</div>
     </div>
+    ${analysis.counterPerspective ? `
+    <div class="ts-panel-divider"></div>
+    <div class="ts-counter-perspective">
+      <div class="ts-counter-perspective-title">💡 ALTERNATIVE VIEWPOINT:</div>
+      <div class="ts-counter-perspective-text">${analysis.counterPerspective}</div>
+    </div>
+    ` : ''}
     ${analysis.counterSources && analysis.counterSources.length > 0 ? `
     <div class="ts-panel-divider"></div>
     <div class="ts-counter-sources">
-      <div class="ts-counter-title">🌐 RELATED COVERAGE:</div>
-      <div class="ts-counter-subtitle">Real articles from around the web on this topic:</div>
-      ${analysis.counterSources.map(src => `
+      <div class="ts-counter-title">🌐 FURTHER READING:</div>
+      <div class="ts-counter-subtitle">Real articles — labelled by how they relate to this post:</div>
+      ${analysis.counterSources.map(src => {
+        const stanceLabel = src.stance === 'counter' ? '↔ Counter' : src.stance === 'supporting' ? '→ Supporting' : '• Neutral';
+        const stanceClass = src.stance === 'counter' ? 'ts-stance-counter' : src.stance === 'supporting' ? 'ts-stance-supporting' : 'ts-stance-neutral';
+        return `
         <a class="ts-counter-item ts-counter-link" href="${src.url}" target="_blank" rel="noopener noreferrer">
           <div class="ts-counter-outlet">
             <span class="ts-counter-name">${src.outlet}</span>
-            ${src.lean ? `<span class="ts-counter-lean">${src.lean}</span>` : ''}
+            <span class="ts-counter-stance ${stanceClass}">${stanceLabel}</span>
           </div>
           <div class="ts-counter-headline">${src.headline}</div>
           ${src.snippet ? `<div class="ts-counter-snippet">${src.snippet}</div>` : ''}
-        </a>
-      `).join('')}
+        </a>`;
+      }).join('')}
     </div>
     ` : ''}
     ${analysis.hasVideo && analysis.videoAnalysis ? `
@@ -694,6 +868,42 @@ function createPanel(analysis: AnalysisResult): HTMLElement {
     <div class="ts-video-analysis">
       <div class="ts-video-title">🎬 VIDEO CONTEXT:</div>
       <div class="ts-video-text">${analysis.videoAnalysis}</div>
+    </div>
+    ` : ''}
+    ${analysis.commentAnalysis ? `
+    <div class="ts-panel-divider"></div>
+    <div class="ts-comment-climate">
+      <div class="ts-comment-title">💬 COMMENT CLIMATE:</div>
+      <div class="ts-comment-agreement" data-level="${analysis.commentAnalysis.agreementLevel}">
+        ${(() => {
+          const labels: Record<string, string> = {
+            'echo-chamber': '🔴 Echo Chamber',
+            'mostly-agree': '🟡 Mostly Agreement',
+            'mixed': '🟢 Mixed Views',
+            'mostly-disagree': '🟡 Mostly Disagreement',
+            'polarised': '🔴 Polarised'
+          };
+          return labels[analysis.commentAnalysis!.agreementLevel] || analysis.commentAnalysis!.agreementLevel;
+        })()}
+      </div>
+      <div class="ts-comment-tone">${analysis.commentAnalysis.overallTone}</div>
+      <div class="ts-comment-lean">${analysis.commentAnalysis.leaningSummary}</div>
+      ${analysis.commentAnalysis.highlights && analysis.commentAnalysis.highlights.length > 0 ? `
+      <div class="ts-comment-highlights-title">Worth reading:</div>
+      ${analysis.commentAnalysis.highlights.map(h => {
+        const sentimentIcon: Record<string, string> = { agree: '👍', disagree: '👎', nuanced: '🤔', neutral: '➖' };
+        return `
+        <div class="ts-comment-highlight" data-sentiment="${h.sentiment}">
+          <div class="ts-highlight-header">
+            <span class="ts-highlight-icon">${sentimentIcon[h.sentiment] || '💬'}</span>
+            <span class="ts-highlight-author">@${h.author}</span>
+            <span class="ts-highlight-sentiment">${h.sentiment}</span>
+          </div>
+          <div class="ts-highlight-text">"${h.text}"</div>
+          <div class="ts-highlight-reason">${h.reason}</div>
+        </div>`;
+      }).join('')}
+      ` : ''}
     </div>
     ` : ''}
     <div class="ts-panel-disclaimer">
@@ -725,6 +935,40 @@ function createPanel(analysis: AnalysisResult): HTMLElement {
   return panel;
 }
 
+// Create the "loading deep analysis" panel shown while waiting
+function createLoadingPanel(): HTMLElement {
+  const panel = document.createElement('div');
+  panel.className = 'think-social-panel';
+  panel.innerHTML = `
+    <div class="ts-panel-header">
+      <span class="ts-panel-icon">🔍</span>
+      <span class="ts-panel-title">UNDER THE HOOD</span>
+      <button class="ts-panel-close">&times;</button>
+    </div>
+    <div class="ts-panel-loading-deep">
+      <div class="think-social-spinner" style="width:20px;height:20px;border-width:2px;margin:0 auto 12px;"></div>
+      <div style="text-align:center;color:#a5b4fc;font-size:12px;font-weight:500;">Running deep analysis...</div>
+      <div style="text-align:center;color:#6b7280;font-size:11px;margin-top:6px;">Searching the web, verifying sources, checking relevance</div>
+    </div>
+    <div class="ts-panel-disclaimer">
+      AI-generated analysis — may contain errors. Inkline provides context, not verdicts. Always verify independently.
+    </div>
+  `;
+
+  const closeBtn = panel.querySelector('.ts-panel-close');
+  closeBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.classList.remove('ts-panel-visible');
+    activePanel = null;
+  });
+
+  panel.addEventListener('wheel', (e) => { e.stopPropagation(); }, { passive: false });
+  panel.addEventListener('touchmove', (e) => { e.stopPropagation(); }, { passive: false });
+  panel.addEventListener('click', (e) => { e.stopPropagation(); });
+
+  return panel;
+}
+
 function createLoadingBadge(): HTMLElement {
   const badge = document.createElement('div');
   badge.className = 'think-social-badge think-social-loading';
@@ -744,64 +988,179 @@ function injectBadge(article: Element, postId: string): HTMLElement | null {
   return badge;
 }
 
-function updateBadge(postId: string, analysis: AnalysisResult | null, error?: string): void {
+// Set badge to show quick-scan traffic light (no panel yet — panel comes on hover)
+function setBadgeQuick(postId: string, quickResult: { overall: 'green' | 'amber' | 'red'; summary: string } | null, error?: string): void {
   const badge = document.querySelector(`.think-social-badge[data-post-id="${postId}"]`);
   if (!badge) return;
-  
+
   badge.classList.remove('think-social-loading');
   const badgeEl = badge as HTMLElement;
-  
-  if (error) {
+
+  if (error || !quickResult) {
     badgeEl.classList.add('think-social-error');
-    badgeEl.title = error;
+    badgeEl.title = error || 'Analysis unavailable';
     badgeEl.innerHTML = '<div class="think-social-error-icon">⚠️</div>';
     return;
   }
-  
-  if (!analysis) return;
-  
-  badgeEl.setAttribute('data-rating', analysis.overall);
-  badgeEl.title = RATING_LABELS[analysis.overall];
-  
+
+  badgeEl.setAttribute('data-rating', quickResult.overall);
+  badgeEl.title = `${RATING_LABELS[quickResult.overall]} — hover for details`;
+
   const light = document.createElement('div');
   light.className = 'think-social-light';
-  light.style.backgroundColor = COLORS[analysis.overall];
+  light.style.backgroundColor = COLORS[quickResult.overall];
   badgeEl.innerHTML = '';
   badgeEl.appendChild(light);
-  
-  const panel = createPanel(analysis);
-  panel.setAttribute('data-for-post', postId);
-  document.body.appendChild(panel);
-  
+
+  // Wire up hover → deep analysis and click → show panel
+  setupBadgeInteraction(badgeEl, postId);
+}
+
+// Position and show a panel next to a badge
+function showPanel(panel: HTMLElement, badgeEl: HTMLElement): void {
+  if (activePanel && activePanel !== panel) {
+    activePanel.classList.remove('ts-panel-visible');
+  }
+
+  const rect = badgeEl.getBoundingClientRect();
+  const panelWidth = 340;
+  const panelMaxHeight = 520;
+  let top = rect.bottom + 8;
+  let left = rect.right - panelWidth;
+  if (left < 8) left = 8;
+  if (top + panelMaxHeight > window.innerHeight) {
+    top = rect.top - panelMaxHeight - 8;
+    if (top < 8) top = 8;
+  }
+  panel.style.top = `${top}px`;
+  panel.style.left = `${left}px`;
+  panel.classList.add('ts-panel-visible');
+  activePanel = panel;
+}
+
+// Setup hover-to-deep-analyze and click-to-show-panel on a badge
+function setupBadgeInteraction(badgeEl: HTMLElement, postId: string): void {
+  let hoverTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // On hover: pre-fetch deep analysis (if not already done)
+  badgeEl.addEventListener('mouseenter', () => {
+    const meta = postMetaMap.get(postId);
+    if (!meta || meta.deepResult || meta.deepPending) return;
+
+    // Start deep analysis after a brief hover (300ms to avoid accidental triggers)
+    hoverTimer = setTimeout(() => {
+      triggerDeepAnalysis(postId);
+    }, 300);
+  });
+
+  badgeEl.addEventListener('mouseleave', () => {
+    if (hoverTimer) {
+      clearTimeout(hoverTimer);
+      hoverTimer = null;
+    }
+  });
+
+  // On click: show the panel (deep if available, loading state if pending, quick summary if not yet started)
   badgeEl.addEventListener('click', (e) => {
     e.stopPropagation();
     e.preventDefault();
-    
-    const isVisible = panel.classList.contains('ts-panel-visible');
-    if (activePanel && activePanel !== panel) {
-      activePanel.classList.remove('ts-panel-visible');
-    }
-    
-    if (isVisible) {
-      panel.classList.remove('ts-panel-visible');
-      activePanel = null;
-    } else {
-      const rect = badgeEl.getBoundingClientRect();
-      const panelWidth = 340;
-      const panelMaxHeight = 520;
-      let top = rect.bottom + 8;
-      let left = rect.right - panelWidth;
-      if (left < 8) left = 8;
-      if (top + panelMaxHeight > window.innerHeight) {
-        top = rect.top - panelMaxHeight - 8;
-        if (top < 8) top = 8;
+
+    const meta = postMetaMap.get(postId);
+    if (!meta) return;
+
+    // Remove any existing panel for this post
+    const existingPanel = document.querySelector(`[data-for-post="${postId}"]`);
+    if (existingPanel) {
+      const isVisible = existingPanel.classList.contains('ts-panel-visible');
+      if (isVisible) {
+        existingPanel.classList.remove('ts-panel-visible');
+        activePanel = null;
+        return;
       }
-      panel.style.top = `${top}px`;
-      panel.style.left = `${left}px`;
-      panel.classList.add('ts-panel-visible');
-      activePanel = panel;
     }
+
+    // If deep result is ready, show the full panel
+    if (meta.deepResult) {
+      let panel = document.querySelector(`[data-for-post="${postId}"]`) as HTMLElement;
+      if (!panel) {
+        panel = createPanel(meta.deepResult);
+        panel.setAttribute('data-for-post', postId);
+        document.body.appendChild(panel);
+      }
+      showPanel(panel, badgeEl);
+      return;
+    }
+
+    // Otherwise trigger deep analysis and show loading panel
+    if (!meta.deepPending) {
+      triggerDeepAnalysis(postId);
+    }
+
+    // Show loading panel
+    let loadingPanel = document.querySelector(`[data-for-post="${postId}"]`) as HTMLElement;
+    if (!loadingPanel) {
+      loadingPanel = createLoadingPanel();
+      loadingPanel.setAttribute('data-for-post', postId);
+      document.body.appendChild(loadingPanel);
+    }
+    showPanel(loadingPanel, badgeEl);
   });
+}
+
+// Trigger deep analysis for a post
+function triggerDeepAnalysis(postId: string): void {
+  const meta = postMetaMap.get(postId);
+  if (!meta || meta.deepResult || meta.deepPending) return;
+
+  meta.deepPending = true;
+  console.log(`[Inkline] Triggering deep analysis for ${postId}`);
+
+  chrome.runtime.sendMessage(
+    {
+      type: 'DEEP_ANALYZE',
+      payload: {
+        postId,
+        text: meta.text,
+        author: meta.author,
+        hasVideo: meta.media.hasVideo,
+        videoDescription: meta.media.videoDescription,
+        videoThumbnailUrl: meta.media.videoThumbnailUrl,
+        imageUrls: meta.media.imageUrls,
+        comments: meta.comments
+      }
+    },
+    (response) => {
+      meta.deepPending = false;
+
+      if (response?.payload?.analysis) {
+        meta.deepResult = response.payload.analysis;
+
+        // Update badge color if deep analysis changed the rating
+        const badge = document.querySelector(`.think-social-badge[data-post-id="${postId}"]`) as HTMLElement;
+        if (badge && meta.deepResult) {
+          badge.setAttribute('data-rating', meta.deepResult.overall);
+          badge.title = RATING_LABELS[meta.deepResult.overall];
+          const light = badge.querySelector('.think-social-light') as HTMLElement;
+          if (light) light.style.backgroundColor = COLORS[meta.deepResult.overall];
+        }
+
+        // Replace loading panel with full panel if it's currently visible
+        const existingPanel = document.querySelector(`[data-for-post="${postId}"]`);
+        const wasVisible = existingPanel?.classList.contains('ts-panel-visible');
+        if (existingPanel) existingPanel.remove();
+
+        const fullPanel = createPanel(meta.deepResult!);
+        fullPanel.setAttribute('data-for-post', postId);
+        document.body.appendChild(fullPanel);
+
+        if (wasVisible && badge) {
+          showPanel(fullPanel, badge);
+        }
+      } else if (response?.payload?.error) {
+        console.error(`[Inkline] Deep analysis failed for ${postId}:`, response.payload.error);
+      }
+    }
+  );
 }
 
 // Global click-to-close handler (registered once)
@@ -817,46 +1176,60 @@ document.addEventListener('click', (e) => {
 });
 
 // ============================================================
-// POST PROCESSING PIPELINE (shared across all platforms)
+// POST PROCESSING PIPELINE — Tier 1 quick scan
 // ============================================================
 
 async function processPost(article: Element): Promise<void> {
   const postId = getPostId(article);
   if (!postId) return;
   if (processedPosts.has(postId) || pendingPosts.has(postId)) return;
-  
+
   const text = getPostText(article);
   if (!text || text.length < 10) return;
-  
+
   const author = getPostAuthor(article);
   const media = detectMedia(article);
-  
+  const comments = extractComments(article);
+
+  if (comments.length > 0) {
+    console.log(`[Inkline] Found ${comments.length} comments for ${postId}`);
+  }
+
+  // Store metadata for later deep analysis on hover
+  postMetaMap.set(postId, { postId, text, author, media, comments });
+
   pendingPosts.add(postId);
-  
+
   const badge = injectBadge(article, postId);
   if (!badge) {
     pendingPosts.delete(postId);
     return;
   }
-  
+
+  // Tier 1: Quick scan — cheap, just gets the traffic light color
   chrome.runtime.sendMessage(
     {
-      type: 'ANALYZE_POST',
-      payload: {
-        tweetId: postId,  // keep field name for backward compat with background.ts
-        text,
-        author,
-        hasVideo: media.hasVideo,
-        videoDescription: media.videoDescription,
-        videoThumbnailUrl: media.videoThumbnailUrl,
-        imageUrls: media.imageUrls
-      }
+      type: 'QUICK_SCAN',
+      payload: { postId, text, author }
     },
     (response) => {
       pendingPosts.delete(postId);
       processedPosts.add(postId);
+
       if (response?.payload) {
-        updateBadge(postId, response.payload.analysis, response.payload.error);
+        const { quickResult, error } = response.payload;
+        if (quickResult) {
+          const meta = postMetaMap.get(postId);
+          if (meta) meta.quickResult = quickResult;
+
+          // Auto-trigger deep analysis for amber/red — pre-cache so it's
+          // ready instantly when the user clicks
+          if (quickResult.overall === 'amber' || quickResult.overall === 'red') {
+            console.log(`[Inkline] Auto-deep for ${quickResult.overall} post ${postId}`);
+            triggerDeepAnalysis(postId);
+          }
+        }
+        setBadgeQuick(postId, quickResult, error);
       }
     }
   );
@@ -881,12 +1254,11 @@ function observePosts(): void {
       }
     }
     if (shouldProcess) {
-      // Debounce — don't reprocess faster than every 300ms
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(processVisiblePosts, 300);
     }
   });
-  
+
   observer.observe(document.body, { childList: true, subtree: true });
   console.log(`[Inkline] Observer started on ${PLATFORM}`);
 }
@@ -896,8 +1268,8 @@ function init(): void {
     console.log('[Inkline] Unknown platform, not activating');
     return;
   }
-  
-  console.log(`[Inkline] Content script loaded on ${PLATFORM}`);
+
+  console.log(`[Inkline] Content script loaded on ${PLATFORM} (two-tier mode)`);
   processVisiblePosts();
   observePosts();
 }
