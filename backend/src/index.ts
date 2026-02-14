@@ -137,9 +137,10 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
 
     // === TIER 2: Deep analysis — full pipeline ===
     
-    // Check cache first
+    // Check cache — bypass if we have comments but cache lacks comment analysis
     const cached = await getCachedAnalysis(text);
-    if (cached) {
+    const hasComments = comments && comments.length > 0;
+    if (cached && (!hasComments || cached.commentAnalysis)) {
       const response: AnalyzeResponse = {
         success: true,
         analysis: cached,

@@ -11,6 +11,13 @@ interface CounterSource {
   isReal: boolean;
 }
 
+interface CommentAnalysis {
+  overallTone: string;
+  leaningSummary: string;
+  highlights: Array<{ author: string; text: string; reason: string; sentiment: string }>;
+  agreementLevel: string;
+}
+
 interface AnalysisResult {
   overall: 'green' | 'amber' | 'red';
   perspective: { rating: 'green' | 'amber' | 'red'; label: string };
@@ -20,7 +27,9 @@ interface AnalysisResult {
   tone: { rating: 'green' | 'amber' | 'red'; label: string };
   summary: string;
   confidence: number;
+  counterPerspective?: string;
   counterSources?: CounterSource[];
+  commentAnalysis?: CommentAnalysis;
   videoAnalysis?: string;
   hasVideo?: boolean;
 }
@@ -200,10 +209,15 @@ async function handleDeepAnalysis(
   comments: string[] = []
 ): Promise<{ analysis: AnalysisResult | null; error?: string; cached?: boolean }> {
   try {
-    // Check cache first
+    // Check cache — but skip if we have comments and cached result lacks commentAnalysis
     const cached = await getCachedAnalysis(text);
     if (cached) {
-      return { analysis: cached, cached: true };
+      const hasCommentData = cached.commentAnalysis && cached.commentAnalysis.overallTone;
+      if (comments.length === 0 || hasCommentData) {
+        return { analysis: cached, cached: true };
+      }
+      // We have comments now but cached result doesn't have comment analysis — re-analyze
+      console.log('[Inkline] Cache hit but missing commentAnalysis, re-analyzing with comments');
     }
 
     // No rate limit check for deep — it was already counted during quick scan

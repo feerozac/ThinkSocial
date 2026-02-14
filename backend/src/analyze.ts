@@ -297,6 +297,7 @@ export async function analyzePost(
   }
 
   // Comment context
+  console.log(`[Inkline] Deep: ${comments.length} comments received`);
   let commentContext = '';
   if (comments.length > 0) {
     // Take up to 20 comments, truncated to keep tokens reasonable
@@ -325,7 +326,7 @@ export async function analyzePost(
         { role: 'system', content: DEEP_SYSTEM_PROMPT },
         { role: 'user', content: userPrompt }
       ],
-      max_tokens: 1500,
+      max_tokens: 2500,
       response_format: { type: 'json_object' }
     });
 
@@ -381,6 +382,9 @@ export async function analyzePost(
     // Carry commentAnalysis through
     if (raw.commentAnalysis && typeof raw.commentAnalysis === 'object') {
       analysis.commentAnalysis = raw.commentAnalysis as AnalysisResult['commentAnalysis'];
+      console.log(`[Inkline] Comment analysis returned: ${(analysis.commentAnalysis as any)?.agreementLevel}, ${(analysis.commentAnalysis as any)?.highlights?.length || 0} highlights`);
+    } else {
+      console.log(`[Inkline] No commentAnalysis in DeepSeek response (comments provided: ${comments.length})`);
     }
 
     if (hasVideo) analysis.hasVideo = true;
